@@ -4,7 +4,7 @@
 
 WoundWatch uses **Gemma 4 multimodal AI** to analyze weekly foot photos, track wound progression over time, and alert patients and clinicians before amputation risk becomes critical.
 
-> Built for the [Kaggle Gemma 3 Worldwide Hackathon](https://www.kaggle.com/competitions/gemma-3-worldwide-hackathon) — targeting Health & Sciences, Unsloth, and Ollama tracks.
+> Built for the [Kaggle Gemma 4 Good Hackathon](https://www.kaggle.com/competitions/gemma-4-good-hackathon) — targeting Health & Sciences, Unsloth, and Ollama tracks.
 
 ---
 
@@ -81,7 +81,7 @@ Fine-tuned `unsloth/gemma-4-E4B-it` on the [DFUC 2021 dataset](https://dfu-chall
 }
 ```
 
-Fine-tuned model: [HuggingFace](#) *(uploading after training)*
+Fine-tuned model: [5seoyoung/woundwatch-gemma4-e4b](https://huggingface.co/5seoyoung/woundwatch-gemma4-e4b)
 
 ---
 
