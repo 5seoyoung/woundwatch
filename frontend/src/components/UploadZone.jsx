@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import TossEmoji from './TossEmoji'
 
 export default function UploadZone({ onFile }) {
   const inputRef = useRef(null)
@@ -16,21 +17,39 @@ export default function UploadZone({ onFile }) {
       onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
       onDragLeave={() => setDragging(false)}
       onDrop={(e) => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files) }}
-      className={`
-        border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors
-        ${dragging ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'}
-      `}
+      style={{
+        margin: '16px 20px',
+        border: `2px dashed ${dragging ? 'var(--primary)' : 'var(--border)'}`,
+        borderRadius: 20,
+        padding: '28px 20px',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+        background: dragging ? 'var(--primary-soft)' : 'var(--surface)',
+        cursor: 'pointer',
+        transition: 'border-color 0.2s, background 0.2s',
+      }}
     >
       <input
         ref={inputRef}
         type="file"
         accept="image/*"
-        className="hidden"
+        style={{ display: 'none' }}
         onChange={(e) => handleFiles(e.target.files)}
       />
-      <div className="text-4xl mb-3">📷</div>
-      <p className="font-medium text-gray-700">Drop foot photo here or click to upload</p>
-      <p className="text-sm text-gray-400 mt-1">JPG, PNG — max 10MB</p>
+      <TossEmoji emoji="📷" size={44} />
+      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--on-surface)' }}>
+        Upload a foot photo
+      </div>
+      <div style={{ fontSize: 13, color: 'var(--on-surface-2)', textAlign: 'center', lineHeight: 1.5 }}>
+        Take weekly photos from the same angle<br />for the most accurate tracking
+      </div>
+      <div style={{
+        background: 'var(--primary)', color: 'white', borderRadius: 100,
+        padding: '10px 24px', fontSize: 13, fontWeight: 700, marginTop: 4,
+        display: 'inline-flex', alignItems: 'center', gap: 8,
+      }}>
+        <TossEmoji emoji="📁" size={14} />
+        Choose Photo
+      </div>
     </div>
   )
 }

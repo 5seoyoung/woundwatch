@@ -1,14 +1,28 @@
+import TossEmoji from './TossEmoji'
+
 const CONFIG = {
-  LOW:    { label: 'LOW RISK',    bg: 'bg-green-100',  text: 'text-green-800',  dot: 'bg-green-500'  },
-  MEDIUM: { label: 'MEDIUM RISK', bg: 'bg-yellow-100', text: 'text-yellow-800', dot: 'bg-yellow-500' },
-  HIGH:   { label: 'HIGH RISK',   bg: 'bg-red-100',    text: 'text-red-800',    dot: 'bg-red-500'    },
+  HIGH:   { label: 'High Risk',   emoji: '🔴', bg: 'var(--danger-soft)',  color: 'var(--danger)' },
+  MEDIUM: { label: 'Medium Risk', emoji: '🟡', bg: 'var(--warning-soft)', color: 'var(--warning)' },
+  LOW:    { label: 'Low Risk',    emoji: '🟢', bg: 'var(--success-soft)', color: 'var(--success)' },
 }
 
-export default function RiskBadge({ level }) {
+export default function RiskBadge({ level, size = 'sm' }) {
   const c = CONFIG[level] ?? CONFIG.LOW
+  const pad = size === 'lg' ? '6px 14px' : '3px 10px'
+  const fs  = size === 'lg' ? 13 : 11
+
   return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${c.bg} ${c.text}`}>
-      <span className={`w-2 h-2 rounded-full ${c.dot}`} />
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      background: c.bg, color: c.color,
+      borderRadius: 100,
+      padding: pad,
+      fontSize: fs,
+      fontWeight: 700,
+      letterSpacing: '0.01em',
+      whiteSpace: 'nowrap',
+    }}>
+      <TossEmoji emoji={c.emoji} size={size === 'lg' ? 14 : 11} />
       {c.label}
     </span>
   )
