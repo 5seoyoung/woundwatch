@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import TossEmoji from '../components/TossEmoji'
+import RiskBadge from '../components/RiskBadge'
 
 const SAMPLE = [
   { date: '2026-04-03', weekLabel: 'Week 1', infection: false, ischemia: false, severity: 3.0, wound_area_cm2: 1.8, risk_level: 'LOW' },
@@ -9,76 +10,118 @@ const SAMPLE = [
   { date: '2026-04-17', weekLabel: 'Week 3', infection: true,  ischemia: true,  severity: 8.0, wound_area_cm2: 4.1, risk_level: 'HIGH' },
 ]
 
-const RISK_COLOR = {
-  HIGH:   { bg: 'var(--danger-soft)',  color: 'var(--danger)',  dot: '#D93025' },
-  MEDIUM: { bg: 'var(--warning-soft)', color: 'var(--warning)', dot: '#E37400' },
-  LOW:    { bg: 'var(--success-soft)', color: 'var(--success)', dot: '#1E8E3E' },
+const RISK_PALETTE = {
+  HIGH:   { color: '#D97B6C', soft: '#FFF4F3', border: 'rgba(217,123,108,0.25)', text: '#B85C4C', label: 'High Risk'   },
+  MEDIUM: { color: '#E8963C', soft: '#FFF8EE', border: 'rgba(232,150,60,0.25)',  text: '#C07020', label: 'Medium Risk' },
+  LOW:    { color: '#52B788', soft: '#F0F9F4', border: 'rgba(82,183,136,0.25)',  text: '#2E8A5E', label: 'Low Risk'    },
 }
 
-function TrendBar({ values }) {
-  const max = Math.max(...values, 0.1)
+// ── Circular risk gauge ──────────────────────────────────────────────────────
+function RiskGauge({ score, level }) {
+  const R = 52, CX = 68, CY = 68
+  const CIRC = 2 * Math.PI * R
+  const filled = Math.max(0, Math.min(1, score / 100)) * CIRC
+  const pal = RISK_PALETTE[level] ?? RISK_PALETTE.LOW
+
   return (
-    <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 20, flexShrink: 0 }}>
-      {values.map((v, i) => (
-        <div key={i} style={{
-          width: 5,
-          height: `${Math.max((v / max) * 100, 12)}%`,
-          borderRadius: 2,
-          background: i === values.length - 1 ? 'var(--primary)' : 'var(--primary-soft)',
-        }} />
-      ))}
+    <svg width={CX * 2} height={CY * 2} viewBox={`0 0 ${CX * 2} ${CY * 2}`}>
+      {/* Track */}
+      <circle cx={CX} cy={CY} r={R} fill="none" stroke="var(--border)" strokeWidth="10" />
+      {/* Glow layer */}
+      <circle
+        cx={CX} cy={CY} r={R} fill="none"
+        stroke={pal.color} strokeWidth="14" opacity="0.12"
+        strokeDasharray={`${filled} ${CIRC}`}
+        transform={`rotate(-90 ${CX} ${CY})`}
+      />
+      {/* Main arc */}
+      <circle
+        cx={CX} cy={CY} r={R} fill="none"
+        stroke={pal.color} strokeWidth="10" strokeLinecap="round"
+        strokeDasharray={`${filled} ${CIRC}`}
+        transform={`rotate(-90 ${CX} ${CY})`}
+        style={{ transition: 'stroke-dasharray 1s cubic-bezier(0.34,1.56,0.64,1)' }}
+      />
+      {/* Score number */}
+      <text
+        x={CX} y={CY - 7}
+        textAnchor="middle" fontSize="28" fontWeight="800"
+        fill="var(--on-surface)"
+        fontFamily="'Pretendard', -apple-system, sans-serif"
+      >{score}</text>
+      <text
+        x={CX} y={CY + 13}
+        textAnchor="middle" fontSize="11" fontWeight="600"
+        fill="var(--on-surface-3)"
+        fontFamily="'Pretendard', -apple-system, sans-serif"
+      >/ 100</text>
+    </svg>
+  )
+}
+
+// ── Mini metric pill ─────────────────────────────────────────────────────────
+function MetricPill({ emoji, label, value, valueColor }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '8px 12px', borderRadius: 10,
+      background: 'var(--surface-dim)', border: '1px solid var(--border)',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <TossEmoji emoji={emoji} size={14} />
+        <span style={{ fontSize: 11, color: 'var(--on-surface-2)', fontWeight: 500 }}>{label}</span>
+      </div>
+      <span style={{ fontSize: 12, fontWeight: 700, color: valueColor || 'var(--on-surface)' }}>{value}</span>
     </div>
   )
 }
 
-function formatDate(d) {
-  const dt = new Date(d)
-  return `${dt.toLocaleString('en', { month: 'short' })} ${dt.getDate()}, ${dt.getFullYear()}`
-}
-
-function ScanRow({ record, areasTrend, isLast }) {
-  const rc = RISK_COLOR[record.risk_level] ?? RISK_COLOR.LOW
-  const chips = []
-  if (record.infection) chips.push({ label: 'Infection', bg: 'var(--danger-soft)', color: 'var(--danger)' })
-  if (record.ischemia)  chips.push({ label: 'Ischemia',  bg: 'var(--warning-soft)', color: 'var(--warning)' })
-  if (!record.infection && !record.ischemia) chips.push({ label: 'No infection', bg: 'var(--surface-dim)', color: 'var(--on-surface-2)' })
+// ── Recent scan row ──────────────────────────────────────────────────────────
+function ScanRow({ record, trendAreas, isLast }) {
+  const pal = RISK_PALETTE[record.risk_level] ?? RISK_PALETTE.LOW
+  const max = Math.max(...trendAreas, 0.1)
 
   return (
     <div style={{
       display: 'flex', gap: 12, alignItems: 'center',
-      padding: '14px 16px',
+      padding: '12px 16px',
       borderBottom: isLast ? 'none' : '1px solid var(--border)',
     }}>
       <div style={{
-        width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-        background: rc.bg,
+        width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+        background: pal.soft,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <TossEmoji emoji="🦶" size={22} />
+        <TossEmoji emoji="🦶" size={20} />
       </div>
-
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--on-surface)' }}>{record.weekLabel}</span>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: rc.dot, flexShrink: 0 }} />
-          <span style={{ fontSize: 12, fontWeight: 700, color: rc.color }}>{record.risk_level}</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: pal.text,
+            background: pal.soft, padding: '1px 7px', borderRadius: 99 }}>
+            {pal.label}
+          </span>
         </div>
-        <div style={{ fontSize: 11, color: 'var(--on-surface-3)', marginBottom: 4 }}>{formatDate(record.date)}</div>
-        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-          {chips.map((c, i) => (
-            <span key={i} style={{
-              fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 100,
-              background: c.bg, color: c.color,
-            }}>{c.label}</span>
-          ))}
+        <div style={{ fontSize: 11, color: 'var(--on-surface-3)' }}>
+          {record.date} · {record.wound_area_cm2} cm²
+          {record.infection ? ' · Infection ⚠' : ''}
         </div>
       </div>
-
-      <TrendBar values={areasTrend} />
+      {/* Mini sparkline */}
+      <div style={{ display: 'flex', gap: 2.5, alignItems: 'flex-end', height: 18, flexShrink: 0 }}>
+        {trendAreas.map((v, i) => (
+          <div key={i} style={{
+            width: 4, height: `${Math.max((v / max) * 100, 14)}%`,
+            borderRadius: 2,
+            background: i === trendAreas.length - 1 ? pal.color : 'var(--border)',
+          }} />
+        ))}
+      </div>
     </div>
   )
 }
 
+// ── Main component ───────────────────────────────────────────────────────────
 export default function Home() {
   const navigate = useNavigate()
   const [records, setRecords] = useState(SAMPLE)
@@ -94,9 +137,9 @@ export default function Home() {
 
   const latest = records[records.length - 1]
   const prev   = records[records.length - 2]
-  const isHigh = latest?.risk_level === 'HIGH'
-  const isMed  = latest?.risk_level === 'MEDIUM'
+  const pal    = RISK_PALETTE[latest?.risk_level] ?? RISK_PALETTE.LOW
 
+  const score = latest ? Math.min(100, Math.round(latest.severity * 10)) : 0
   const areaChangePct = latest && prev && prev.wound_area_cm2
     ? Math.round(((latest.wound_area_cm2 - prev.wound_area_cm2) / prev.wound_area_cm2) * 100)
     : null
@@ -105,133 +148,160 @@ export default function Home() {
 
   return (
     <div>
-      {/* ── Header ── */}
-      <div style={{ background: 'var(--surface)', padding: '20px 20px 0' }}>
+      {/* ── App header ──────────────────────────────────────────────────── */}
+      <div style={{ background: 'var(--surface)', padding: '16px 20px 20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <div>
-            <div style={{ fontSize: 12, color: 'var(--on-surface-2)', marginBottom: 2, fontWeight: 500, letterSpacing: '0.02em', textTransform: 'uppercase' }}>
-              WoundWatch
-            </div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--on-surface)', letterSpacing: '-0.3px' }}>
-              Good morning, <span style={{ color: 'var(--primary)' }}>Alex</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <img src="/logo.png" alt="WoundWatch" style={{ width: 34, height: 34, objectFit: 'contain' }} />
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--on-surface)', letterSpacing: '-0.3px' }}>
+                WoundWatch
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--on-surface-3)', fontWeight: 500 }}>
+                Week {records.length} of monitoring
+              </div>
             </div>
           </div>
           <div style={{
-            width: 40, height: 40, borderRadius: '50%',
+            width: 38, height: 38, borderRadius: '50%',
             background: 'var(--primary-soft)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 13, fontWeight: 700, color: 'var(--primary)',
-            letterSpacing: '-0.5px',
+            fontSize: 12, fontWeight: 800, color: 'var(--primary)', letterSpacing: '-0.5px',
           }}>AH</div>
         </div>
 
-        {/* ── Status Card ── */}
-        {(isHigh || isMed) ? (
-          <div style={{
-            borderRadius: 20,
-            overflow: 'hidden',
-            marginBottom: 0,
-            border: `1px solid ${isHigh ? 'rgba(217,48,37,0.2)' : 'rgba(227,116,0,0.2)'}`,
-          }}>
-            {/* colored top strip */}
-            <div style={{
-              background: isHigh
-                ? 'linear-gradient(135deg, #D93025 0%, #E8622F 100%)'
-                : 'linear-gradient(135deg, #E37400 0%, #F9AB00 100%)',
-              padding: '14px 18px',
-              display: 'flex', alignItems: 'center', gap: 10,
-            }}>
-              <TossEmoji emoji={isHigh ? '🚨' : '⚠️'} size={20} />
-              <span style={{ color: 'white', fontWeight: 700, fontSize: 14 }}>
-                {isHigh ? 'High Risk — Action Required' : 'Moderate Risk — Monitor Closely'}
-              </span>
-            </div>
-            {/* white content */}
-            <div style={{ background: 'var(--surface)', padding: '16px 18px' }}>
-              <p style={{ fontSize: 13, color: 'var(--on-surface-2)', lineHeight: 1.6, marginBottom: 14 }}>
-                {isHigh
-                  ? `Wound area grew ${areaChangePct != null ? `${areaChangePct}%` : 'significantly'} this week. Infection detected. Please visit a clinic soon.`
-                  : `Wound area is growing. Signs of ischemia detected. Keep monitoring and consult your doctor.`}
-              </p>
-              <button
-                onClick={() => navigate('/analyze')}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  background: isHigh ? 'var(--danger)' : 'var(--warning)',
-                  color: 'white', borderRadius: 100,
-                  padding: '8px 18px', fontSize: 13, fontWeight: 700,
-                  border: 'none', cursor: 'pointer',
-                }}
-              >
-                <TossEmoji emoji="🏥" size={14} />
-                Book a Clinic Visit
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div style={{
-            borderRadius: 20, overflow: 'hidden',
-            border: '1px solid rgba(30,142,62,0.2)',
-          }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #1E8E3E 0%, #34A853 100%)',
-              padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 10,
-            }}>
-              <TossEmoji emoji="✅" size={20} />
-              <span style={{ color: 'white', fontWeight: 700, fontSize: 14 }}>
-                Looking Good — Keep it Up
-              </span>
-            </div>
-            <div style={{ background: 'var(--surface)', padding: '16px 18px' }}>
-              <p style={{ fontSize: 13, color: 'var(--on-surface-2)', lineHeight: 1.6, marginBottom: 14 }}>
-                Your wound is stable. Continue weekly photo check-ins to stay ahead of any changes.
-              </p>
-              <button
-                onClick={() => navigate('/analyze')}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  background: 'var(--success)', color: 'white', borderRadius: 100,
-                  padding: '8px 18px', fontSize: 13, fontWeight: 700,
-                  border: 'none', cursor: 'pointer',
-                }}
-              >
-                <TossEmoji emoji="📷" size={14} />
-                Take Today's Photo
-              </button>
-            </div>
-          </div>
-        )}
+        {/* ── MAIN RISK CARD ──────────────────────────────────────────── */}
+        <div style={{
+          borderRadius: 20, overflow: 'hidden',
+          background: 'var(--surface)',
+          border: `1.5px solid ${pal.border}`,
+          boxShadow: `0 4px 20px ${pal.border}`,
+        }}>
+          {/* Top accent bar */}
+          <div style={{ height: 4, background: pal.color, opacity: 0.85 }} />
 
-        <div style={{ height: 20 }} />
+          <div style={{ padding: '18px 18px 16px' }}>
+            {/* Status row */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div>
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  background: pal.soft, borderRadius: 99,
+                  padding: '4px 10px 4px 8px',
+                }}>
+                  <div style={{
+                    width: 7, height: 7, borderRadius: '50%', background: pal.color,
+                    animation: latest?.risk_level !== 'LOW' ? 'pulse-dot 2s infinite' : 'none',
+                  }} />
+                  <span style={{ fontSize: 12, fontWeight: 700, color: pal.text, letterSpacing: '0.04em' }}>
+                    {pal.label.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--on-surface-3)', fontWeight: 500 }}>
+                Last scan: {latest?.date ?? '—'}
+              </div>
+            </div>
+
+            {/* Gauge + metrics */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              {/* Circular gauge */}
+              <div style={{ flexShrink: 0 }}>
+                <RiskGauge score={score} level={latest?.risk_level ?? 'LOW'} />
+                <div style={{ textAlign: 'center', fontSize: 10, fontWeight: 600, color: 'var(--on-surface-3)', marginTop: -2 }}>
+                  Risk Score
+                </div>
+              </div>
+
+              {/* Metric pills */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 7 }}>
+                <MetricPill
+                  emoji="🦠"
+                  label="Infection"
+                  value={latest?.infection ? 'Detected' : 'None'}
+                  valueColor={latest?.infection ? 'var(--danger)' : 'var(--success)'}
+                />
+                <MetricPill
+                  emoji="🩸"
+                  label="Ischemia"
+                  value={latest?.ischemia ? 'Detected' : 'None'}
+                  valueColor={latest?.ischemia ? 'var(--danger)' : 'var(--success)'}
+                />
+                <MetricPill
+                  emoji="📐"
+                  label="Area"
+                  value={latest?.wound_area_cm2 ? `${latest.wound_area_cm2} cm²` : '—'}
+                />
+                {areaChangePct != null && (
+                  <MetricPill
+                    emoji="📈"
+                    label="vs last week"
+                    value={`${areaChangePct > 0 ? '+' : ''}${areaChangePct}%`}
+                    valueColor={areaChangePct > 0 ? 'var(--warning)' : 'var(--success)'}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* CTA */}
+            <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+              <button
+                onClick={() => navigate('/analyze')}
+                style={{
+                  flex: 1,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                  background: latest?.risk_level === 'HIGH' ? pal.color : 'var(--primary)',
+                  color: 'white', borderRadius: 12,
+                  padding: '12px', fontSize: 13, fontWeight: 700,
+                  border: 'none', cursor: 'pointer',
+                  boxShadow: `0 3px 12px ${pal.border}`,
+                }}
+              >
+                <TossEmoji emoji={latest?.risk_level === 'HIGH' ? '🏥' : '📷'} size={16} />
+                {latest?.risk_level === 'HIGH' ? 'Book a Clinic Visit' : 'New Scan'}
+              </button>
+              <button
+                onClick={() => navigate('/tracking')}
+                style={{
+                  padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--border)',
+                  background: 'var(--surface-dim)', color: 'var(--on-surface-2)',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}
+              >
+                <TossEmoji emoji="📊" size={15} />
+                History
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div style={{ height: 8, background: 'var(--surface-dim)' }} />
 
-      {/* ── Quick Actions ── */}
-      <div style={{ background: 'var(--surface)', padding: '20px 20px 24px' }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--on-surface-2)', marginBottom: 14, letterSpacing: '0.03em', textTransform: 'uppercase' }}>
+      {/* ── Quick Actions ──────────────────────────────────────────────── */}
+      <div style={{ background: 'var(--surface)', padding: '18px 20px 22px' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--on-surface-3)', marginBottom: 14, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
           Quick Actions
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
           {[
-            { emoji: '📷', label: 'New Scan',    bg: 'var(--primary-soft)',  to: '/analyze' },
-            { emoji: '📊', label: 'Progress',    bg: 'var(--success-soft)',  to: '/tracking' },
-            { emoji: '🩺', label: 'Risk Score',  bg: 'var(--warning-soft)',  to: '/tracking' },
-            { emoji: '📋', label: 'Report',      bg: 'var(--purple-soft)',   to: '/profile' },
+            { emoji: '📷', label: 'New Scan',  bg: 'var(--primary-soft)',  to: '/analyze' },
+            { emoji: '📊', label: 'Progress',  bg: 'var(--success-soft)',  to: '/tracking' },
+            { emoji: '🩺', label: 'Risk',      bg: 'var(--warning-soft)',  to: '/tracking' },
+            { emoji: '📋', label: 'Profile',   bg: 'var(--purple-soft)',   to: '/profile' },
           ].map(({ emoji, label, bg, to }) => (
             <button key={label} onClick={() => navigate(to)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7 }}
             >
               <div style={{
-                width: 54, height: 54, borderRadius: 14, background: bg,
+                width: 52, height: 52, borderRadius: 14, background: bg,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 boxShadow: 'var(--shadow-1)',
               }}>
-                <TossEmoji emoji={emoji} size={26} />
+                <TossEmoji emoji={emoji} size={25} />
               </div>
-              <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--on-surface-2)', textAlign: 'center', lineHeight: 1.3 }}>
-                {label}
-              </span>
+              <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--on-surface-2)' }}>{label}</span>
             </button>
           ))}
         </div>
@@ -239,28 +309,23 @@ export default function Home() {
 
       <div style={{ height: 8, background: 'var(--surface-dim)' }} />
 
-      {/* ── Recent Scans ── */}
-      <div style={{ padding: '20px 20px 4px' }}>
+      {/* ── Recent Scans ───────────────────────────────────────────────── */}
+      <div style={{ padding: '18px 20px 4px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--on-surface-2)', letterSpacing: '0.03em', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--on-surface-3)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
             Recent Scans
           </div>
-          <button onClick={() => navigate('/tracking')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: 'var(--primary)' }}>
+          <button onClick={() => navigate('/tracking')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 700, color: 'var(--primary)' }}>
             See all →
           </button>
         </div>
-
-        <div style={{ background: 'var(--surface)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--shadow-1)' }}>
+        <div style={{ background: 'var(--surface)', borderRadius: 16, overflow: 'hidden', boxShadow: 'var(--shadow-1)', border: '1px solid var(--border)' }}>
           {recentRecords.map((r, i) => {
             const origIdx = records.length - 1 - i
-            const areasTrend = records.slice(0, origIdx + 1).map(rec => rec.wound_area_cm2 ?? 0)
+            const trendAreas = records.slice(0, origIdx + 1).map(rec => rec.wound_area_cm2 ?? 0)
             return (
-              <ScanRow
-                key={r.date}
-                record={r}
-                areasTrend={areasTrend}
-                isLast={i === recentRecords.length - 1}
-              />
+              <ScanRow key={r.date} record={r} trendAreas={trendAreas} isLast={i === recentRecords.length - 1} />
             )
           })}
         </div>

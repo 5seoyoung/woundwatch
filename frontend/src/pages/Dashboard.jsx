@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import UploadZone from '../components/UploadZone'
+import CameraCapture from '../components/CameraCapture'
 import AnalysisResult from '../components/AnalysisResult'
 import TossEmoji from '../components/TossEmoji'
 
@@ -16,6 +17,7 @@ const SAMPLE_RESULT = {
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const [mode,    setMode]    = useState('upload')
   const [preview, setPreview] = useState(null)
   const [loading, setLoading] = useState(false)
   const [result,  setResult]  = useState(null)
@@ -73,11 +75,45 @@ export default function Dashboard() {
         <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--on-surface)' }}>New Scan</div>
       </div>
 
+      {/* ── Mode toggle ── */}
+      {!result && !loading && (
+        <div style={{ padding: '16px 20px 0', display: 'flex', gap: 8 }}>
+          {[
+            { key: 'upload', emoji: '📁', label: 'Upload' },
+            { key: 'camera', emoji: '📷', label: 'Camera' },
+          ].map(({ key, emoji, label }) => (
+            <button
+              key={key}
+              onClick={() => setMode(key)}
+              style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                padding: '10px 0', borderRadius: 12,
+                border: mode === key ? '1.5px solid var(--primary)' : '1.5px solid var(--border)',
+                background: mode === key ? 'var(--primary-soft)' : 'var(--surface)',
+                color: mode === key ? 'var(--primary)' : 'var(--on-surface-2)',
+                fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+            >
+              <TossEmoji emoji={emoji} size={15} />
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── Camera ── */}
+      {!result && !loading && mode === 'camera' && (
+        <div style={{ marginTop: 12 }}>
+          <CameraCapture onCapture={file => { setMode('upload'); handleFile(file) }} onClose={() => setMode('upload')} />
+        </div>
+      )}
+
       {/* ── Upload ── */}
-      <UploadZone onFile={handleFile} />
+      {!result && !loading && mode === 'upload' && <UploadZone onFile={handleFile} />}
 
       {/* ── Try Sample button ── */}
-      {!result && !loading && !preview && (
+      {!result && !loading && !preview && mode === 'upload' && (
         <div style={{ padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
             <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
