@@ -152,7 +152,7 @@ export default function Home() {
       <div style={{ background: 'var(--surface)', padding: '16px 20px 20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img src="/logo.png" alt="WoundWatch" style={{ width: 34, height: 34, objectFit: 'contain' }} />
+            <img src={`${import.meta.env.BASE_URL}logo.png`} alt="WoundWatch" style={{ width: 34, height: 34, objectFit: 'contain' }} />
             <div>
               <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--on-surface)', letterSpacing: '-0.3px' }}>
                 WoundWatch
