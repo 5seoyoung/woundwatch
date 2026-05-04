@@ -15,7 +15,7 @@ const SAMPLE_RESULT = {
   description: 'Moderate to severe diabetic foot ulcer observed. Erythema and exudate around the wound margins suggest possible bacterial colonization. Compromised blood flow also noted. Immediate medical attention is strongly recommended.',
 }
 
-export default function Dashboard() {
+export default function Dashboard({ patient }) {
   const navigate = useNavigate()
   const [mode,    setMode]    = useState('upload')
   const [preview, setPreview] = useState(null)
@@ -31,7 +31,7 @@ export default function Dashboard() {
 
     const form = new FormData()
     form.append('file', file)
-    form.append('patient_id', 'demo-patient')
+    form.append('patient_id', patient?.patient_id ?? 'default')
 
     try {
       const { data } = await axios.post('/api/analyze', form)

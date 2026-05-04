@@ -3,12 +3,7 @@ import axios from 'axios'
 import RiskBadge from '../components/RiskBadge'
 import WoundChart from '../components/WoundChart'
 import TossEmoji from '../components/TossEmoji'
-
-const SAMPLE = [
-  { date: '2026-04-03', weekLabel: 'Week 1', infection: false, ischemia: false, severity: 3.0, wound_area_cm2: 1.8, risk_level: 'LOW' },
-  { date: '2026-04-10', weekLabel: 'Week 2', infection: false, ischemia: true,  severity: 5.5, wound_area_cm2: 2.6, risk_level: 'MEDIUM' },
-  { date: '2026-04-17', weekLabel: 'Week 3', infection: true,  ischemia: true,  severity: 8.0, wound_area_cm2: 4.1, risk_level: 'HIGH' },
-]
+import { DEMO_RECORDS } from '../hooks/usePatient'
 
 function formatDate(d) {
   const dt = new Date(d)
@@ -38,20 +33,22 @@ function WeekRow({ label, area, maxArea, riskLevel, isLast }) {
   )
 }
 
-export default function History() {
-  const [records, setRecords] = useState(SAMPLE)
-  const [loading, setLoading] = useState(true)
+export default function History({ patient }) {
+  const [records, setRecords] = useState(patient?.is_demo ? DEMO_RECORDS : [])
+  const [loading, setLoading] = useState(!patient?.is_demo)
   const [view, setView] = useState('patient') // 'patient' | 'clinical'
 
   useEffect(() => {
-    axios.get('/api/history?patient_id=demo-patient')
+    if (!patient?.patient_id) { setLoading(false); return }
+    axios.get(`/api/history?patient_id=${patient.patient_id}`)
       .then(({ data }) => {
         const recs = Array.isArray(data) ? data : (data.records || [])
         if (recs.length > 0) setRecords(recs)
+        else if (patient.is_demo) setRecords(DEMO_RECORDS)
       })
-      .catch(() => {})
+      .catch(() => { if (patient.is_demo) setRecords(DEMO_RECORDS) })
       .finally(() => setLoading(false))
-  }, [])
+  }, [patient?.patient_id])
 
   const latest  = records[records.length - 1]
   const first   = records[0]
@@ -66,6 +63,18 @@ export default function History() {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
         <div style={{ width: 28, height: 28, border: '3px solid var(--primary-soft)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      </div>
+    )
+  }
+
+  if (records.length === 0) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 300, padding: '0 32px', textAlign: 'center' }}>
+        <TossEmoji emoji="📊" size={40} style={{ marginBottom: 16 }} />
+        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--on-surface)', marginBottom: 8 }}>No records yet</div>
+        <div style={{ fontSize: 13, color: 'var(--on-surface-2)', lineHeight: 1.5 }}>
+          Upload your first wound photo to start tracking progress over time.
+        </div>
       </div>
     )
   }

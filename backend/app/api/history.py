@@ -22,16 +22,16 @@ def get_history(
     )
     return [
         HistoryRecord(
-            id          = r.id,
-            patient_id  = r.patient_id,
-            image_path  = r.image_path,
-            date        = r.date,
-            infection   = r.infection,
-            ischemia    = r.ischemia,
-            severity    = r.severity,
-            area_cm2    = r.area_cm2,
-            risk_level  = r.risk_level,
-            description = r.description or "",
+            id             = r.id,
+            patient_id     = r.patient_id,
+            image_path     = r.image_path,
+            date           = r.date,
+            infection      = r.infection,
+            ischemia       = r.ischemia,
+            severity       = r.severity,
+            wound_area_cm2 = r.wound_area_cm2,
+            risk_level     = r.risk_level,
+            description    = r.description or "",
         )
         for r in records
     ]

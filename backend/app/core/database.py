@@ -9,20 +9,28 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 class Base(DeclarativeBase):
     pass
 
+class Patient(Base):
+    __tablename__ = "patients"
+
+    id            = Column(String, primary_key=True, index=True)  # UUID
+    name          = Column(String, nullable=False)
+    diabetes_type = Column(String, nullable=False)  # Type 1 | Type 2 | Gestational | Other
+    created_at    = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
 class WoundRecord(Base):
     __tablename__ = "wound_records"
 
-    id          = Column(Integer, primary_key=True, index=True)
-    patient_id  = Column(String, index=True, nullable=False)
-    image_path  = Column(String, nullable=False)
-    date        = Column(String, nullable=False)
-    infection   = Column(Boolean, default=False)
-    ischemia    = Column(Boolean, default=False)
-    severity    = Column(Float, default=0.0)
-    area_cm2    = Column(Float, nullable=True)
-    risk_level  = Column(String, default="LOW")
-    description = Column(String, nullable=True)
-    created_at  = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    id               = Column(Integer, primary_key=True, index=True)
+    patient_id       = Column(String, index=True, nullable=False)
+    image_path       = Column(String, nullable=False)
+    date             = Column(String, nullable=False)
+    infection        = Column(Boolean, default=False)
+    ischemia         = Column(Boolean, default=False)
+    severity         = Column(Float, default=0.0)
+    wound_area_cm2   = Column(Float, nullable=True)
+    risk_level       = Column(String, default="LOW")
+    description      = Column(String, nullable=True)
+    created_at       = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 def get_db():
     db = SessionLocal()

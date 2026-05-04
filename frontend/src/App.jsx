@@ -1,5 +1,7 @@
 import { Routes, Route, NavLink } from 'react-router-dom'
 import TossEmoji from './components/TossEmoji'
+import { usePatient } from './hooks/usePatient'
+import Onboarding from './pages/Onboarding'
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import History from './pages/History'
@@ -13,6 +15,12 @@ const NAV = [
 ]
 
 export default function App() {
+  const { patient, register, enterDemo, clear } = usePatient()
+
+  if (!patient) {
+    return <Onboarding onDemo={enterDemo} onComplete={register} />
+  }
+
   return (
     <div style={{
       display: 'flex',
@@ -25,10 +33,10 @@ export default function App() {
     }}>
       <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
         <Routes>
-          <Route path="/"         element={<Home />} />
-          <Route path="/analyze"  element={<Dashboard />} />
-          <Route path="/tracking" element={<History />} />
-          <Route path="/profile"  element={<Profile />} />
+          <Route path="/"         element={<Home patient={patient} />} />
+          <Route path="/analyze"  element={<Dashboard patient={patient} />} />
+          <Route path="/tracking" element={<History patient={patient} />} />
+          <Route path="/profile"  element={<Profile patient={patient} onReset={clear} />} />
         </Routes>
       </main>
 
