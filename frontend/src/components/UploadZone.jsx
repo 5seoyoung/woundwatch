@@ -22,10 +22,12 @@ export default function UploadZone({ onFile }) {
         border: `2px dashed ${dragging ? 'var(--primary)' : 'var(--border)'}`,
         borderRadius: 20,
         padding: '28px 20px',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+        minHeight: 200,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10,
         background: dragging ? 'var(--primary-soft)' : 'var(--surface)',
         cursor: 'pointer',
         transition: 'border-color 0.2s, background 0.2s',
+        WebkitTapHighlightColor: 'transparent',
       }}
     >
       <input

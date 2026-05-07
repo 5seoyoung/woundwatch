@@ -33,12 +33,16 @@ async def analyze(
 
     upload_dir = Path(settings.upload_dir)
     upload_dir.mkdir(exist_ok=True)
-    filename = f"{uuid.uuid4().hex}.jpg"
+    filename   = f"{uuid.uuid4().hex}.jpg"
     image_path = str(upload_dir / filename)
     image.save(image_path, format="JPEG", exif=b"")
 
+    # Gemma 4 inference (includes wound_area_cm2 estimate from the model)
     result = analyze_image(image)
-    result["wound_area_cm2"] = estimate_wound_area(image)
+
+    # Use OpenCV area as fallback if Gemma didn't return one
+    if not result.get("wound_area_cm2"):
+        result["wound_area_cm2"] = estimate_wound_area(image)
 
     today = datetime.now(timezone.utc).strftime("%b %d")
     record = WoundRecord(
@@ -50,7 +54,7 @@ async def analyze(
         severity       = result["severity"],
         wound_area_cm2 = result.get("wound_area_cm2"),
         risk_level     = result["risk_level"],
-        description    = result["description"],
+        description    = result.get("description", ""),
     )
     db.add(record)
     db.commit()

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import RiskBadge from './RiskBadge'
 import TossEmoji from './TossEmoji'
 
@@ -11,6 +12,96 @@ function MetricCard({ emoji, label, value, color }) {
         <span style={{ fontSize: 11, color: 'var(--on-surface-2)', fontWeight: 500 }}>{label}</span>
       </div>
       <div style={{ fontSize: 15, fontWeight: 700, color: color || 'var(--on-surface)' }}>{value}</div>
+    </div>
+  )
+}
+
+const NEXT_STEPS = {
+  HIGH: {
+    dot: '#D93025',
+    title: '지금 즉시 당뇨발 전문 클리닉에 연락하세요',
+    items: [
+      '발에 체중을 싣지 마세요',
+      '상처를 깨끗한 거즈로 덮어두세요',
+      '오늘 안에 병원 방문 또는 응급 연락',
+    ],
+    bg: 'var(--danger-soft)',
+    border: 'rgba(217,48,37,0.2)',
+    color: 'var(--danger)',
+  },
+  MEDIUM: {
+    dot: '#F9AB00',
+    title: '이번 주 안에 담당 의사에게 상처 사진을 보내세요',
+    items: [
+      '매일 사진 찍어 변화 기록',
+      '발이 붓거나 열감이 생기면 즉시 병원',
+      '다음 주 재검사 예약',
+    ],
+    bg: '#FFFBF0',
+    border: 'rgba(249,171,0,0.25)',
+    color: '#B06000',
+  },
+  LOW: {
+    dot: '#1E8E3E',
+    title: '현재 상태 양호합니다. 주간 모니터링을 계속하세요',
+    items: [
+      '다음 주 같은 각도로 사진 촬영',
+      '발 세척 및 보습 유지',
+      '이상 징후 발생 시 즉시 재분석',
+    ],
+    bg: '#F0FAF3',
+    border: 'rgba(30,142,62,0.2)',
+    color: 'var(--success)',
+  },
+}
+
+function NextSteps({ riskLevel }) {
+  const [checked, setChecked] = useState({})
+  const cfg = NEXT_STEPS[riskLevel] || NEXT_STEPS.LOW
+
+  return (
+    <div style={{
+      marginTop: 14,
+      background: cfg.bg,
+      borderRadius: 14, padding: '14px 16px',
+      border: `1px solid ${cfg.border}`,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        <div style={{ width: 10, height: 10, borderRadius: '50%', background: cfg.dot, flexShrink: 0 }} />
+        <div style={{ fontSize: 13, fontWeight: 700, color: cfg.color, lineHeight: 1.4 }}>
+          {cfg.title}
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {cfg.items.map((item, i) => (
+          <label key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+            <div
+              onClick={() => setChecked(c => ({ ...c, [i]: !c[i] }))}
+              style={{
+                width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+                border: checked[i] ? 'none' : `1.5px solid ${cfg.dot}`,
+                background: checked[i] ? cfg.dot : 'transparent',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.15s',
+              }}
+            >
+              {checked[i] && (
+                <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
+                  <path d="M1 4L4 7L10 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </div>
+            <span style={{
+              fontSize: 13, color: 'var(--on-surface)',
+              textDecoration: checked[i] ? 'line-through' : 'none',
+              opacity: checked[i] ? 0.5 : 1,
+              transition: 'all 0.15s',
+            }}>
+              {item}
+            </span>
+          </label>
+        ))}
+      </div>
     </div>
   )
 }
@@ -80,22 +171,12 @@ export default function AnalysisResult({ result }) {
           />
         </div>
 
-        {/* AI description — Google Gemma branded */}
+        {/* AI description */}
         {description && (
-          <div style={{
-            borderRadius: 12,
-            overflow: 'hidden',
-            border: '1px solid var(--border)',
-          }}>
-            {/* gradient header bar */}
-            <div style={{
-              background: 'linear-gradient(90deg, #4285F4, #34A853, #FBBC04, #EA4335)',
-              height: 3,
-            }} />
+          <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)' }}>
+            <div style={{ background: 'linear-gradient(90deg, #4285F4, #34A853, #FBBC04, #EA4335)', height: 3 }} />
             <div style={{ background: 'var(--surface)', padding: '12px 14px' }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8,
-              }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                 <TossEmoji emoji="✨" size={14} />
                 <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary)', letterSpacing: '0.02em' }}>
                   Gemma 4 AI Analysis
@@ -108,25 +189,8 @@ export default function AnalysisResult({ result }) {
           </div>
         )}
 
-        {/* High risk alert */}
-        {risk_level === 'HIGH' && (
-          <div style={{
-            marginTop: 14,
-            background: 'var(--danger-soft)',
-            borderRadius: 12, padding: '12px 14px',
-            display: 'flex', gap: 10, alignItems: 'flex-start',
-          }}>
-            <TossEmoji emoji="⚠️" size={16} style={{ marginTop: 1, flexShrink: 0 }} />
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--danger)', marginBottom: 2 }}>
-                Immediate care recommended
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--danger)', opacity: 0.8 }}>
-                Please visit a diabetic foot specialist as soon as possible.
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Next Steps */}
+        <NextSteps riskLevel={risk_level} />
       </div>
     </div>
   )

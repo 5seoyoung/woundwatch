@@ -16,7 +16,7 @@ export default function WoundChart({ data, color = '#D93025' }) {
   const gradId = `wg-${color.replace(/[^a-z0-9]/gi, '')}`
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 80, overflow: 'visible' }} preserveAspectRatio="none">
+    <svg viewBox={`0 0 ${W} ${H + 18}`} style={{ width: '100%', height: 98, overflow: 'visible' }} preserveAspectRatio="none">
       <defs>
         <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity="0.15" />
@@ -28,6 +28,29 @@ export default function WoundChart({ data, color = '#D93025' }) {
       ))}
       <path d={area} fill={`url(#${gradId})`} />
       <path d={line} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+      {/* Event marker rings */}
+      {data.map((d, i) => {
+        const isFirst = i === 0
+        const isNewInfection = i > 0 && d.infection && !data[i - 1].infection
+        const isNewHigh = i > 0 && d.risk_level === 'HIGH' && data[i - 1].risk_level !== 'HIGH'
+        if (!isFirst && !isNewInfection && !isNewHigh) return null
+        const ringColor = isFirst ? '#888' : '#D93025'
+        return (
+          <circle
+            key={`ring-${i}`}
+            cx={pts[i].x} cy={pts[i].y}
+            r={9}
+            fill="none"
+            stroke={ringColor}
+            strokeWidth="1.5"
+            strokeDasharray="3 2"
+            opacity="0.7"
+          />
+        )
+      })}
+
+      {/* Data points */}
       {pts.map((p, i) => (
         <circle key={i} cx={p.x} cy={p.y}
           r={i === pts.length - 1 ? 5 : 3.5}

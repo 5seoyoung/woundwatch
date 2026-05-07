@@ -5,6 +5,7 @@ from app.core.database import init_db
 from app.api.analyze import router as analyze_router
 from app.api.history import router as history_router
 from app.api.patients import router as patients_router
+from app.api.risk import router as risk_router
 
 app = FastAPI(title="WoundWatch API", version="1.0.0")
 
@@ -16,8 +17,9 @@ app.add_middleware(
 )
 
 app.include_router(patients_router, prefix="/api")
-app.include_router(analyze_router, prefix="/api")
-app.include_router(history_router, prefix="/api")
+app.include_router(analyze_router,  prefix="/api")
+app.include_router(history_router,  prefix="/api")
+app.include_router(risk_router,     prefix="/api")
 
 
 @app.on_event("startup")

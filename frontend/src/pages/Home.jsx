@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../lib/api'
 import TossEmoji from '../components/TossEmoji'
 import { DEMO_RECORDS } from '../hooks/usePatient'
 
@@ -99,7 +99,7 @@ export default function Home({ patient }) {
 
   useEffect(() => {
     if (!patient?.patient_id) return
-    axios.get(`/api/history?patient_id=${patient.patient_id}`)
+    api.get(`/api/history?patient_id=${patient.patient_id}`)
       .then(({ data }) => {
         if (Array.isArray(data) && data.length > 0) setRecords(data)
       })

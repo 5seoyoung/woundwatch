@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../lib/api'
 import RiskBadge from '../components/RiskBadge'
 import WoundChart from '../components/WoundChart'
 import TossEmoji from '../components/TossEmoji'
@@ -7,7 +7,99 @@ import { DEMO_RECORDS } from '../hooks/usePatient'
 
 function formatDate(d) {
   const dt = new Date(d)
-  return `${dt.toLocaleString('en', { month: 'short' })} ${dt.getDate()}`
+  return isNaN(dt) ? d : `${dt.toLocaleString('en', { month: 'short' })} ${dt.getDate()}`
+}
+
+function DeltaRow({ label, prev, curr, format, higherIsBad = true }) {
+  if (prev == null || curr == null) return null
+  const changed = prev !== curr
+  const worsened = higherIsBad ? curr > prev : curr < prev
+  const improved = higherIsBad ? curr < prev : curr > prev
+  const color = !changed ? 'var(--on-surface-3)' : worsened ? 'var(--danger)' : 'var(--success)'
+  const arrow = !changed ? '→' : worsened ? '▲' : '▼'
+  const isNew = typeof curr === 'boolean' && !prev && curr
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid var(--border)' }}>
+      <span style={{ fontSize: 12, color: 'var(--on-surface-2)', fontWeight: 500 }}>{label}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700 }}>
+        <span style={{ color: 'var(--on-surface-3)' }}>{format(prev)}</span>
+        <span style={{ color }}>{arrow}</span>
+        <span style={{ color }}>{format(curr)}</span>
+        {isNew && (
+          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--danger)', background: 'var(--danger-soft)', padding: '1px 6px', borderRadius: 99 }}>신규</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function WeeklyDelta({ records }) {
+  if (records.length < 2) {
+    return (
+      <div style={{ margin: '8px 20px 0', background: 'var(--surface)', borderRadius: 16, padding: '14px 16px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-1)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 16 }}>📍</span>
+          <span style={{ fontSize: 13, color: 'var(--on-surface-2)', lineHeight: 1.5 }}>
+            첫 번째 기록입니다. 다음 주에 다시 촬영하면 변화 추이를 확인할 수 있어요.
+          </span>
+        </div>
+      </div>
+    )
+  }
+
+  const prev = records[records.length - 2]
+  const curr = records[records.length - 1]
+  const riskOrder = { LOW: 0, MEDIUM: 1, HIGH: 2 }
+  const riskColor = (r) => r === 'HIGH' ? 'var(--danger)' : r === 'MEDIUM' ? 'var(--warning)' : 'var(--success)'
+
+  return (
+    <div style={{ margin: '8px 20px 0', background: 'var(--surface)', borderRadius: 16, padding: '14px 16px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-1)' }}>
+      <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--on-surface-2)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 10 }}>
+        이번 주 vs 지난 주
+      </div>
+
+      <DeltaRow
+        label="궤양 면적"
+        prev={prev.wound_area_cm2}
+        curr={curr.wound_area_cm2}
+        format={v => `${v} cm²`}
+        higherIsBad
+      />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid var(--border)' }}>
+        <span style={{ fontSize: 12, color: 'var(--on-surface-2)', fontWeight: 500 }}>위험도</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700 }}>
+          <span style={{ color: riskColor(prev.risk_level) }}>{prev.risk_level}</span>
+          <span style={{ color: riskOrder[curr.risk_level] > riskOrder[prev.risk_level] ? 'var(--danger)' : riskOrder[curr.risk_level] < riskOrder[prev.risk_level] ? 'var(--success)' : 'var(--on-surface-3)' }}>→</span>
+          <span style={{ color: riskColor(curr.risk_level) }}>{curr.risk_level}</span>
+        </div>
+      </div>
+      <DeltaRow
+        label="감염"
+        prev={prev.infection}
+        curr={curr.infection}
+        format={v => v ? '있음' : '없음'}
+        higherIsBad
+      />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 0' }}>
+        <span style={{ fontSize: 12, color: 'var(--on-surface-2)', fontWeight: 500 }}>허혈</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700 }}>
+          <span style={{ color: prev.ischemia ? 'var(--danger)' : 'var(--on-surface-3)' }}>{prev.ischemia ? '있음' : '없음'}</span>
+          <span style={{ color: curr.ischemia && !prev.ischemia ? 'var(--danger)' : !curr.ischemia && prev.ischemia ? 'var(--success)' : 'var(--on-surface-3)' }}>→</span>
+          <span style={{ color: curr.ischemia ? 'var(--danger)' : 'var(--success)' }}>{curr.ischemia ? '있음' : '없음'}</span>
+          {curr.ischemia && !prev.ischemia && (
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--danger)', background: 'var(--danger-soft)', padding: '1px 6px', borderRadius: 99 }}>신규</span>
+          )}
+          {!curr.ischemia && prev.ischemia && (
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--success)', background: '#F0FAF3', padding: '1px 6px', borderRadius: 99 }}>개선</span>
+          )}
+          {curr.ischemia && prev.ischemia && (
+            <span style={{ fontSize: 10, color: 'var(--on-surface-3)', padding: '1px 6px' }}>지속 중</span>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function WeekRow({ label, area, maxArea, riskLevel, isLast }) {
@@ -40,7 +132,7 @@ export default function History({ patient }) {
 
   useEffect(() => {
     if (!patient?.patient_id) { setLoading(false); return }
-    axios.get(`/api/history?patient_id=${patient.patient_id}`)
+    api.get(`/api/history?patient_id=${patient.patient_id}`)
       .then(({ data }) => {
         const recs = Array.isArray(data) ? data : (data.records || [])
         if (recs.length > 0) setRecords(recs)
@@ -136,8 +228,11 @@ export default function History({ patient }) {
         </div>
       </div>
 
+      {/* ── Weekly comparison ── */}
+      <WeeklyDelta records={records} />
+
       {/* ── Area chart ── */}
-      <div style={{ background: 'var(--surface)', margin: '8px 20px 0', borderRadius: 16, padding: 18, boxShadow: 'var(--shadow-1)', border: '1px solid var(--border)' }}>
+      <div style={{ background: 'var(--surface)', margin: '10px 20px 0', borderRadius: 16, padding: 18, boxShadow: 'var(--shadow-1)', border: '1px solid var(--border)' }}>
         <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--on-surface-2)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
           Wound Area
         </div>
@@ -160,7 +255,18 @@ export default function History({ patient }) {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--on-surface-3)', marginTop: 8, fontWeight: 500 }}>
-          {records.map(r => <span key={r.date}>{formatDate(r.date)}</span>)}
+          {records.map((r, i) => {
+            const isFirst = i === 0
+            const isNewInf = i > 0 && r.infection && !records[i - 1].infection
+            const isNewHigh = i > 0 && r.risk_level === 'HIGH' && records[i - 1].risk_level !== 'HIGH'
+            const marker = isFirst ? '📍' : isNewInf ? '🔴' : isNewHigh ? '⚠️' : null
+            return (
+              <span key={r.date} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                {marker && <span style={{ fontSize: 9 }}>{marker}</span>}
+                {formatDate(r.date)}
+              </span>
+            )
+          })}
         </div>
       </div>
 

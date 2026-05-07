@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import axios from 'axios'
+import api from '../lib/api'
 
 const STORAGE_KEY = 'ww_patient'
 
@@ -46,7 +46,7 @@ export function usePatient() {
 
   const register = useCallback(async ({ name, diabetes_type }) => {
     try {
-      const { data } = await axios.post('/api/patients', { name, diabetes_type })
+      const { data } = await api.post('/api/patients', { name, diabetes_type })
       const info = {
         patient_id:    data.patient_id,
         name:          data.name,

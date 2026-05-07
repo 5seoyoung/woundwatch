@@ -11,8 +11,17 @@ ollama==0.3.3
 Pillow==10.4.0
 opencv-python-headless==4.10.0.84
 numpy==1.26.4
+requests==2.32.3
 
-# Fine-tuning (Kaggle/Colab only — comment out for prod)
+# HuggingFace
+huggingface-hub==0.24.0
+
+# Utilities
+python-dotenv==1.0.1
+pydantic==2.8.0
+pydantic-settings==2.4.0
+
+# Fine-tuning — uncomment only in Kaggle/Colab GPU environment
 # unsloth
 # torch
 # transformers
@@ -20,11 +29,3 @@ numpy==1.26.4
 # datasets
 # accelerate
 # bitsandbytes
-
-# HuggingFace (model download)
-huggingface-hub==0.24.0
-
-# Utilities
-python-dotenv==1.0.1
-pydantic==2.8.0
-pydantic-settings==2.4.0

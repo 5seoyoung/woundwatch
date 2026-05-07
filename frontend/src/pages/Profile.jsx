@@ -1,7 +1,8 @@
 import TossEmoji from '../components/TossEmoji'
 import RiskBadge from '../components/RiskBadge'
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
+import api from '../lib/api'
 import { DEMO_RECORDS } from '../hooks/usePatient'
 
 const HOW_IT_WORKS = [
@@ -16,6 +17,7 @@ function initials(name = '') {
 }
 
 export default function Profile({ patient, onReset }) {
+  const navigate = useNavigate()
   const [stats, setStats] = useState({ lastScan: '—', total: 0, riskLevel: null })
   const [confirmReset, setConfirmReset] = useState(false)
 
@@ -26,7 +28,7 @@ export default function Profile({ patient, onReset }) {
       setStats({ lastScan: latest.date, total: DEMO_RECORDS.length, riskLevel: latest.risk_level })
       return
     }
-    axios.get(`/api/history?patient_id=${patient.patient_id}`)
+    api.get(`/api/history?patient_id=${patient.patient_id}`)
       .then(({ data }) => {
         if (!Array.isArray(data) || data.length === 0) return
         const latest = data[data.length - 1]
@@ -131,6 +133,26 @@ export default function Profile({ patient, onReset }) {
           ))}
           <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--on-surface-2)' }}>Powered by Google Gemma 4</span>
         </div>
+      </div>
+
+      {/* ── Run Locally ── */}
+      <div style={{ padding: '16px 20px 0' }}>
+        <button
+          onClick={() => navigate('/local')}
+          style={{
+            width: '100%', padding: '14px', borderRadius: 14,
+            background: 'var(--purple-soft)',
+            border: '1.5px solid rgba(155,123,232,0.25)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+            cursor: 'pointer',
+          }}
+        >
+          <TossEmoji emoji="💻" size={18} />
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--purple)' }}>Run Locally with Ollama</div>
+            <div style={{ fontSize: 11, color: 'var(--on-surface-2)' }}>Setup guide for local AI inference</div>
+          </div>
+        </button>
       </div>
 
       {/* ── Reset profile ── */}
