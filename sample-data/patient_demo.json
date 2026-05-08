@@ -1,0 +1,36 @@
+{
+  "patient_id": "demo-patient",
+  "name": "홍길동",
+  "records": [
+    {
+      "date": "2026-04-03",
+      "weekLabel": "1주차 검사 결과",
+      "infection": false,
+      "ischemia": false,
+      "severity": 3.0,
+      "wound_area_cm2": 1.8,
+      "risk_level": "LOW",
+      "description": "초기 단계 궤양이 관찰됩니다. 감염 및 허혈 징후 없음. 경계부 피부 상태 양호. 정기적인 모니터링을 권장합니다."
+    },
+    {
+      "date": "2026-04-10",
+      "weekLabel": "2주차 검사 결과",
+      "infection": false,
+      "ischemia": true,
+      "severity": 5.5,
+      "wound_area_cm2": 2.6,
+      "risk_level": "MEDIUM",
+      "description": "허혈 징후가 새로 감지되었습니다. 궤양 면적이 지난주 대비 44% 증가했습니다. 혈류 공급 상태를 확인하고 주의 깊은 관찰이 필요합니다."
+    },
+    {
+      "date": "2026-04-17",
+      "weekLabel": "3주차 검사 결과",
+      "infection": true,
+      "ischemia": true,
+      "severity": 8.0,
+      "wound_area_cm2": 4.1,
+      "risk_level": "HIGH",
+      "description": "중등도 이상의 궤양이 관찰됩니다. 경계부에 발적과 삼출물이 세균 집락 가능성을 시사하며, 혈류 공급 저하도 동반됩니다. 즉각적인 의료 처치가 필요합니다."
+    }
+  ]
+}
