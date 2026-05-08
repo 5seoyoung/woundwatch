@@ -41,28 +41,41 @@ const PHOTO_GUIDE = {
   ],
 }
 
-function CameraGuideOverlay() {
+function PhotoGuideContent() {
   return (
-    <div style={{ margin: '12px 20px 0', background: 'var(--surface)', borderRadius: 16, padding: '18px 16px', border: '1px solid var(--border)' }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--on-surface)', marginBottom: 14 }}>
-        📸 정확한 촬영 방법
-      </div>
-      <div style={{ marginBottom: 12 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--success)', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '0.04em' }}>✅ 이렇게 찍으세요</div>
+    <>
+      <div style={{ marginBottom: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, color: 'var(--success)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <TossEmoji emoji="✅" size={12} />이렇게 찍으세요
+        </div>
         {PHOTO_GUIDE.good.map(t => (
-          <div key={t} style={{ fontSize: 12, color: 'var(--on-surface)', padding: '3px 0', paddingLeft: 14, position: 'relative' }}>
-            <span style={{ position: 'absolute', left: 0 }}>·</span>{t}
+          <div key={t} style={{ fontSize: 12, color: 'var(--on-surface)', padding: '2px 0', paddingLeft: 12, position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 0, color: 'var(--success)' }}>·</span>{t}
           </div>
         ))}
       </div>
       <div>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--danger)', marginBottom: 7, textTransform: 'uppercase', letterSpacing: '0.04em' }}>❌ 이런 사진은 정확도가 낮아요</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, color: 'var(--danger)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          <TossEmoji emoji="❌" size={12} />이런 사진은 정확도가 낮아요
+        </div>
         {PHOTO_GUIDE.bad.map(t => (
-          <div key={t} style={{ fontSize: 12, color: 'var(--on-surface)', padding: '3px 0', paddingLeft: 14, position: 'relative' }}>
-            <span style={{ position: 'absolute', left: 0 }}>·</span>{t}
+          <div key={t} style={{ fontSize: 12, color: 'var(--on-surface)', padding: '2px 0', paddingLeft: 12, position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 0, color: 'var(--danger)' }}>·</span>{t}
           </div>
         ))}
       </div>
+    </>
+  )
+}
+
+function CameraGuideOverlay() {
+  return (
+    <div style={{ margin: '12px 20px 0', background: 'var(--surface)', borderRadius: 16, padding: '18px 16px', border: '1px solid var(--border)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700, color: 'var(--on-surface)', marginBottom: 14 }}>
+        <TossEmoji emoji="📸" size={16} />
+        정확한 촬영 방법
+      </div>
+      <PhotoGuideContent />
       <div style={{ marginTop: 14, fontSize: 12, fontWeight: 600, color: 'var(--primary)', textAlign: 'center', opacity: 0.7 }}>
         잠시 후 카메라가 실행됩니다...
       </div>
@@ -222,22 +235,7 @@ export default function Dashboard({ patient }) {
           </button>
           {guideOpen && (
             <div style={{ background: 'var(--surface)', borderRadius: '0 0 12px 12px', padding: '12px 14px 14px', border: '1px solid var(--border)', borderTop: 'none' }}>
-              <div style={{ marginBottom: 10 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--success)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>✅ 이렇게 찍으세요</div>
-                {PHOTO_GUIDE.good.map(t => (
-                  <div key={t} style={{ fontSize: 12, color: 'var(--on-surface)', padding: '2px 0', paddingLeft: 12, position: 'relative' }}>
-                    <span style={{ position: 'absolute', left: 0, color: 'var(--success)' }}>·</span>{t}
-                  </div>
-                ))}
-              </div>
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--danger)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>❌ 이런 사진은 정확도가 낮아요</div>
-                {PHOTO_GUIDE.bad.map(t => (
-                  <div key={t} style={{ fontSize: 12, color: 'var(--on-surface)', padding: '2px 0', paddingLeft: 12, position: 'relative' }}>
-                    <span style={{ position: 'absolute', left: 0, color: 'var(--danger)' }}>·</span>{t}
-                  </div>
-                ))}
-              </div>
+              <PhotoGuideContent />
             </div>
           )}
         </div>
@@ -292,8 +290,8 @@ export default function Dashboard({ patient }) {
             borderRadius: '50%', animation: 'spin 0.8s linear infinite',
             margin: '0 auto 20px',
           }} />
-          <div style={{ fontSize: 22, marginBottom: 8 }}>
-            {LOADING_STEPS[loadingStep]?.emoji}
+          <div style={{ marginBottom: 8 }}>
+            <TossEmoji emoji={LOADING_STEPS[loadingStep]?.emoji} size={28} />
           </div>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--on-surface)', marginBottom: 4 }}>
             {LOADING_STEPS[loadingStep]?.text}

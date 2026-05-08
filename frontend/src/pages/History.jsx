@@ -39,7 +39,7 @@ function WeeklyDelta({ records }) {
     return (
       <div style={{ margin: '8px 20px 0', background: 'var(--surface)', borderRadius: 16, padding: '14px 16px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-1)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 16 }}>📍</span>
+          <TossEmoji emoji="📍" size={18} />
           <span style={{ fontSize: 13, color: 'var(--on-surface-2)', lineHeight: 1.5 }}>
             첫 번째 기록입니다. 다음 주에 다시 촬영하면 변화 추이를 확인할 수 있어요.
           </span>
@@ -262,7 +262,7 @@ export default function History({ patient }) {
             const marker = isFirst ? '📍' : isNewInf ? '🔴' : isNewHigh ? '⚠️' : null
             return (
               <span key={r.date} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                {marker && <span style={{ fontSize: 9 }}>{marker}</span>}
+                {marker && <TossEmoji emoji={marker} size={10} />}
                 {formatDate(r.date)}
               </span>
             )

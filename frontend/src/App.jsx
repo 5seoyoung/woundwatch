@@ -25,8 +25,9 @@ function DemoBanner() {
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       flexShrink: 0,
     }}>
-      <span style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600 }}>
-        📋 데모 모드 · Alex Henderson
+      <span style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
+        <TossEmoji emoji="📋" size={13} />
+        데모 모드 · Alex Henderson
       </span>
       <button
         onClick={() => navigate('/analyze')}
