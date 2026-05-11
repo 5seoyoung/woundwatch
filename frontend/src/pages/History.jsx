@@ -27,7 +27,7 @@ function DeltaRow({ label, prev, curr, format, higherIsBad = true }) {
         <span style={{ color }}>{arrow}</span>
         <span style={{ color }}>{format(curr)}</span>
         {isNew && (
-          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--danger)', background: 'var(--danger-soft)', padding: '1px 6px', borderRadius: 99 }}>신규</span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--danger)', background: 'var(--danger-soft)', padding: '1px 6px', borderRadius: 99 }}>NEW</span>
         )}
       </div>
     </div>
@@ -38,12 +38,9 @@ function WeeklyDelta({ records }) {
   if (records.length < 2) {
     return (
       <div style={{ margin: '8px 20px 0', background: 'var(--surface)', borderRadius: 16, padding: '14px 16px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-1)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <TossEmoji emoji="📍" size={18} />
-          <span style={{ fontSize: 13, color: 'var(--on-surface-2)', lineHeight: 1.5 }}>
-            첫 번째 기록입니다. 다음 주에 다시 촬영하면 변화 추이를 확인할 수 있어요.
-          </span>
-        </div>
+        <span style={{ fontSize: 13, color: 'var(--on-surface-2)', lineHeight: 1.5 }}>
+          First record. Scan again next week to track changes.
+        </span>
       </div>
     )
   }
@@ -56,18 +53,18 @@ function WeeklyDelta({ records }) {
   return (
     <div style={{ margin: '8px 20px 0', background: 'var(--surface)', borderRadius: 16, padding: '14px 16px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-1)' }}>
       <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--on-surface-2)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 10 }}>
-        이번 주 vs 지난 주
+        This Week vs Last Week
       </div>
 
       <DeltaRow
-        label="궤양 면적"
+        label="Wound Area"
         prev={prev.wound_area_cm2}
         curr={curr.wound_area_cm2}
         format={v => `${v} cm²`}
         higherIsBad
       />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid var(--border)' }}>
-        <span style={{ fontSize: 12, color: 'var(--on-surface-2)', fontWeight: 500 }}>위험도</span>
+        <span style={{ fontSize: 12, color: 'var(--on-surface-2)', fontWeight: 500 }}>Risk Level</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700 }}>
           <span style={{ color: riskColor(prev.risk_level) }}>{prev.risk_level}</span>
           <span style={{ color: riskOrder[curr.risk_level] > riskOrder[prev.risk_level] ? 'var(--danger)' : riskOrder[curr.risk_level] < riskOrder[prev.risk_level] ? 'var(--success)' : 'var(--on-surface-3)' }}>→</span>
@@ -75,26 +72,26 @@ function WeeklyDelta({ records }) {
         </div>
       </div>
       <DeltaRow
-        label="감염"
+        label="Infection"
         prev={prev.infection}
         curr={curr.infection}
-        format={v => v ? '있음' : '없음'}
+        format={v => v ? 'Yes' : 'No'}
         higherIsBad
       />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 0' }}>
-        <span style={{ fontSize: 12, color: 'var(--on-surface-2)', fontWeight: 500 }}>허혈</span>
+        <span style={{ fontSize: 12, color: 'var(--on-surface-2)', fontWeight: 500 }}>Ischemia</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700 }}>
-          <span style={{ color: prev.ischemia ? 'var(--danger)' : 'var(--on-surface-3)' }}>{prev.ischemia ? '있음' : '없음'}</span>
+          <span style={{ color: prev.ischemia ? 'var(--danger)' : 'var(--on-surface-3)' }}>{prev.ischemia ? 'Yes' : 'No'}</span>
           <span style={{ color: curr.ischemia && !prev.ischemia ? 'var(--danger)' : !curr.ischemia && prev.ischemia ? 'var(--success)' : 'var(--on-surface-3)' }}>→</span>
-          <span style={{ color: curr.ischemia ? 'var(--danger)' : 'var(--success)' }}>{curr.ischemia ? '있음' : '없음'}</span>
+          <span style={{ color: curr.ischemia ? 'var(--danger)' : 'var(--success)' }}>{curr.ischemia ? 'Yes' : 'No'}</span>
           {curr.ischemia && !prev.ischemia && (
-            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--danger)', background: 'var(--danger-soft)', padding: '1px 6px', borderRadius: 99 }}>신규</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--danger)', background: 'var(--danger-soft)', padding: '1px 6px', borderRadius: 99 }}>NEW</span>
           )}
           {!curr.ischemia && prev.ischemia && (
-            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--success)', background: '#F0FAF3', padding: '1px 6px', borderRadius: 99 }}>개선</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--success)', background: '#ECFDF5', padding: '1px 6px', borderRadius: 99 }}>Better</span>
           )}
           {curr.ischemia && prev.ischemia && (
-            <span style={{ fontSize: 10, color: 'var(--on-surface-3)', padding: '1px 6px' }}>지속 중</span>
+            <span style={{ fontSize: 10, color: 'var(--on-surface-3)', padding: '1px 6px' }}>Ongoing</span>
           )}
         </div>
       </div>
@@ -162,7 +159,6 @@ export default function History({ patient }) {
   if (records.length === 0) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 300, padding: '0 32px', textAlign: 'center' }}>
-        <TossEmoji emoji="📊" size={40} style={{ marginBottom: 16 }} />
         <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--on-surface)', marginBottom: 8 }}>No records yet</div>
         <div style={{ fontSize: 13, color: 'var(--on-surface-2)', lineHeight: 1.5 }}>
           Upload your first wound photo to start tracking progress over time.
@@ -212,16 +208,15 @@ export default function History({ patient }) {
         {/* Stats row */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
           {[
-            { emoji: '📐', val: `${latest?.wound_area_cm2 ?? '—'}`, label: 'Area (cm²)', color: latest?.risk_level === 'HIGH' ? 'var(--danger)' : 'var(--on-surface)' },
-            { emoji: '📅', val: `${records.length} wks`, label: 'Tracked', color: 'var(--on-surface)' },
-            { emoji: '⚠️', val: `${alertCount}`, label: 'Alerts', color: alertCount > 0 ? 'var(--warning)' : 'var(--success)' },
-          ].map(({ emoji, val, label, color }) => (
+            { val: `${latest?.wound_area_cm2 ?? '—'}`, label: 'Area (cm²)', color: latest?.risk_level === 'HIGH' ? 'var(--danger)' : 'var(--on-surface)' },
+            { val: `${records.length} wks`, label: 'Tracked', color: 'var(--on-surface)' },
+            { val: `${alertCount}`, label: 'Alerts', color: alertCount > 0 ? 'var(--warning)' : 'var(--success)' },
+          ].map(({ val, label, color }) => (
             <div key={label} style={{
-              background: 'var(--surface-dim)', borderRadius: 12, padding: '12px 10px', textAlign: 'center',
+              background: 'var(--surface-dim)', borderRadius: 12, padding: '14px 10px', textAlign: 'center',
               border: '1px solid var(--border)',
             }}>
-              <TossEmoji emoji={emoji} size={20} style={{ marginBottom: 6 }} />
-              <div style={{ fontSize: 16, fontWeight: 800, color, marginBottom: 2, letterSpacing: '-0.5px' }}>{val}</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color, marginBottom: 2, letterSpacing: '-0.5px' }}>{val}</div>
               <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--on-surface-3)' }}>{label}</div>
             </div>
           ))}
@@ -259,10 +254,10 @@ export default function History({ patient }) {
             const isFirst = i === 0
             const isNewInf = i > 0 && r.infection && !records[i - 1].infection
             const isNewHigh = i > 0 && r.risk_level === 'HIGH' && records[i - 1].risk_level !== 'HIGH'
-            const marker = isFirst ? '📍' : isNewInf ? '🔴' : isNewHigh ? '⚠️' : null
+            const marker = isFirst ? '·' : isNewInf ? '!' : isNewHigh ? '▲' : null
             return (
               <span key={r.date} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                {marker && <TossEmoji emoji={marker} size={10} />}
+                {marker && <span style={{ fontSize: 9, color: isFirst ? 'var(--on-surface-3)' : 'var(--danger)', fontWeight: 700 }}>{marker}</span>}
                 {formatDate(r.date)}
               </span>
             )

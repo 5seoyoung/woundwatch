@@ -5,9 +5,9 @@ import TossEmoji from '../components/TossEmoji'
 import { DEMO_RECORDS } from '../hooks/usePatient'
 
 const RISK_PALETTE = {
-  HIGH:   { color: '#D97B6C', soft: '#FFF4F3', border: 'rgba(217,123,108,0.25)', text: '#B85C4C', label: 'High Risk'   },
-  MEDIUM: { color: '#E8963C', soft: '#FFF8EE', border: 'rgba(232,150,60,0.25)',  text: '#C07020', label: 'Medium Risk' },
-  LOW:    { color: '#52B788', soft: '#F0F9F4', border: 'rgba(82,183,136,0.25)',  text: '#2E8A5E', label: 'Low Risk'    },
+  HIGH:   { color: '#DC2626', soft: '#FEF2F2', border: 'rgba(220,38,38,0.15)',   text: '#991B1B', label: 'High Risk'   },
+  MEDIUM: { color: '#D97706', soft: '#FFFBEB', border: 'rgba(217,119,6,0.15)',   text: '#92400E', label: 'Medium Risk' },
+  LOW:    { color: '#059669', soft: '#ECFDF5', border: 'rgba(5,150,105,0.15)',   text: '#065F46', label: 'Low Risk'    },
 }
 
 function initials(name = '') {
@@ -22,7 +22,7 @@ function RiskGauge({ score, level }) {
   return (
     <svg width={CX * 2} height={CY * 2} viewBox={`0 0 ${CX * 2} ${CY * 2}`}>
       <circle cx={CX} cy={CY} r={R} fill="none" stroke="var(--border)" strokeWidth="10" />
-      <circle cx={CX} cy={CY} r={R} fill="none" stroke={pal.color} strokeWidth="14" opacity="0.12"
+      <circle cx={CX} cy={CY} r={R} fill="none" stroke={pal.color} strokeWidth="14" opacity="0.1"
         strokeDasharray={`${filled} ${CIRC}`} transform={`rotate(-90 ${CX} ${CY})`} />
       <circle cx={CX} cy={CY} r={R} fill="none" stroke={pal.color} strokeWidth="10" strokeLinecap="round"
         strokeDasharray={`${filled} ${CIRC}`} transform={`rotate(-90 ${CX} ${CY})`}
@@ -35,23 +35,20 @@ function RiskGauge({ score, level }) {
   )
 }
 
-function MetricPill({ emoji, label, value, valueColor }) {
+function MetricPill({ label, value, valueColor }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '8px 12px', borderRadius: 10,
       background: 'var(--surface-dim)', border: '1px solid var(--border)',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <TossEmoji emoji={emoji} size={14} />
-        <span style={{ fontSize: 11, color: 'var(--on-surface-2)', fontWeight: 500 }}>{label}</span>
-      </div>
+      <span style={{ fontSize: 11, color: 'var(--on-surface-2)', fontWeight: 500 }}>{label}</span>
       <span style={{ fontSize: 12, fontWeight: 700, color: valueColor || 'var(--on-surface)' }}>{value}</span>
     </div>
   )
 }
 
-function ScanRow({ record, idx, total, trendAreas, isLast }) {
+function ScanRow({ record, idx, trendAreas, isLast }) {
   const pal = RISK_PALETTE[record.risk_level] ?? RISK_PALETTE.LOW
   const max = Math.max(...trendAreas, 0.1)
   return (
@@ -61,12 +58,9 @@ function ScanRow({ record, idx, total, trendAreas, isLast }) {
       borderBottom: isLast ? 'none' : '1px solid var(--border)',
     }}>
       <div style={{
-        width: 40, height: 40, borderRadius: 10, flexShrink: 0,
-        background: pal.soft,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        <TossEmoji emoji="🦶" size={20} />
-      </div>
+        width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
+        background: pal.color, marginLeft: 4,
+      }} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--on-surface)' }}>Week {idx + 1}</span>
@@ -77,7 +71,7 @@ function ScanRow({ record, idx, total, trendAreas, isLast }) {
         </div>
         <div style={{ fontSize: 11, color: 'var(--on-surface-3)' }}>
           {record.date} · {record.wound_area_cm2 ?? '—'} cm²
-          {record.infection ? ' · Infection ⚠' : ''}
+          {record.infection ? ' · Infection' : ''}
         </div>
       </div>
       <div style={{ display: 'flex', gap: 2.5, alignItems: 'flex-end', height: 18, flexShrink: 0 }}>
@@ -132,19 +126,21 @@ export default function Home({ patient }) {
               </div>
             </div>
           </div>
-          {patient?.is_demo && (
-            <span style={{
-              fontSize: 10, fontWeight: 700, color: 'var(--purple)',
-              background: 'var(--purple-soft)', padding: '4px 10px', borderRadius: 99,
-              border: '1px solid rgba(155,123,232,0.2)',
-            }}>DEMO</span>
-          )}
-          <div style={{
-            width: 38, height: 38, borderRadius: '50%',
-            background: 'var(--primary-soft)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 12, fontWeight: 800, color: 'var(--primary)', letterSpacing: '-0.5px',
-          }}>{initials(patient?.name)}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {patient?.is_demo && (
+              <span style={{
+                fontSize: 10, fontWeight: 700, color: 'var(--purple)',
+                background: 'var(--purple-soft)', padding: '4px 10px', borderRadius: 99,
+                border: '1px solid rgba(155,123,232,0.2)',
+              }}>DEMO</span>
+            )}
+            <div style={{
+              width: 38, height: 38, borderRadius: '50%',
+              background: 'var(--primary-soft)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 12, fontWeight: 800, color: 'var(--primary)', letterSpacing: '-0.5px',
+            }}>{initials(patient?.name)}</div>
+          </div>
         </div>
 
         {/* ── Risk card ── */}
@@ -153,7 +149,7 @@ export default function Home({ patient }) {
             borderRadius: 20, border: '1.5px dashed var(--border)',
             padding: '32px 20px', textAlign: 'center',
           }}>
-            <TossEmoji emoji="📷" size={36} style={{ marginBottom: 12 }} />
+            <div style={{ fontSize: 32, marginBottom: 12 }}>📷</div>
             <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--on-surface)', marginBottom: 6 }}>
               No scans yet
             </div>
@@ -166,10 +162,8 @@ export default function Home({ patient }) {
                 background: 'var(--primary)', color: 'white',
                 border: 'none', borderRadius: 12, padding: '12px 28px',
                 fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                display: 'inline-flex', alignItems: 'center', gap: 7,
               }}
             >
-              <TossEmoji emoji="📷" size={15} />
               Take First Scan
             </button>
           </div>
@@ -177,10 +171,10 @@ export default function Home({ patient }) {
           <div style={{
             borderRadius: 20, overflow: 'hidden',
             background: 'var(--surface)',
-            border: `1.5px solid ${pal.border}`,
-            boxShadow: `0 4px 20px ${pal.border}`,
+            border: `1px solid var(--border)`,
+            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
           }}>
-            <div style={{ height: 4, background: pal.color, opacity: 0.85 }} />
+            <div style={{ height: 3, background: pal.color }} />
             <div style={{ padding: '18px 18px 16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <div style={{
@@ -208,18 +202,18 @@ export default function Home({ patient }) {
                   </div>
                 </div>
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 7 }}>
-                  <MetricPill emoji="🦠" label="Infection"
+                  <MetricPill label="Infection"
                     value={latest?.infection ? 'Detected' : 'None'}
                     valueColor={latest?.infection ? 'var(--danger)' : 'var(--success)'} />
-                  <MetricPill emoji="🩸" label="Ischemia"
+                  <MetricPill label="Ischemia"
                     value={latest?.ischemia ? 'Detected' : 'None'}
                     valueColor={latest?.ischemia ? 'var(--danger)' : 'var(--success)'} />
-                  <MetricPill emoji="📐" label="Area"
+                  <MetricPill label="Area"
                     value={latest?.wound_area_cm2 ? `${latest.wound_area_cm2} cm²` : '—'} />
                   {areaChangePct != null && (
-                    <MetricPill emoji="📈" label="vs last week"
+                    <MetricPill label="vs last week"
                       value={`${areaChangePct > 0 ? '+' : ''}${areaChangePct}%`}
-                      valueColor={areaChangePct > 0 ? 'var(--warning)' : 'var(--success)'} />
+                      valueColor={areaChangePct > 0 ? 'var(--danger)' : 'var(--success)'} />
                   )}
                 </div>
               </div>
@@ -230,18 +224,14 @@ export default function Home({ patient }) {
                   background: latest?.risk_level === 'HIGH' ? pal.color : 'var(--primary)',
                   color: 'white', borderRadius: 12, padding: '12px',
                   fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer',
-                  boxShadow: `0 3px 12px ${pal.border}`,
                 }}>
-                  <TossEmoji emoji={latest?.risk_level === 'HIGH' ? '🏥' : '📷'} size={16} />
                   {latest?.risk_level === 'HIGH' ? 'Book a Clinic Visit' : 'New Scan'}
                 </button>
                 <button onClick={() => navigate('/tracking')} style={{
                   padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--border)',
                   background: 'var(--surface-dim)', color: 'var(--on-surface-2)',
                   fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 6,
                 }}>
-                  <TossEmoji emoji="📊" size={15} />
                   History
                 </button>
               </div>
@@ -260,15 +250,16 @@ export default function Home({ patient }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
           {[
             { emoji: '📷', label: 'New Scan', bg: 'var(--primary-soft)', to: '/analyze' },
-            { emoji: '📊', label: 'Progress', bg: 'var(--success-soft)', to: '/tracking' },
-            { emoji: '🩺', label: 'Risk',     bg: 'var(--warning-soft)', to: '/tracking' },
-            { emoji: '📋', label: 'Profile',  bg: 'var(--purple-soft)',  to: '/profile' },
+            { emoji: '📊', label: 'Progress', bg: '#EEF3FD',             to: '/tracking' },
+            { emoji: '🩺', label: 'Risk',     bg: '#FEF3C7',             to: '/tracking' },
+            { emoji: '👤', label: 'Profile',  bg: 'var(--surface-dim)',  to: '/profile' },
           ].map(({ emoji, label, bg, to }) => (
             <button key={label} onClick={() => navigate(to)}
               style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7 }}>
               <div style={{ width: 52, height: 52, borderRadius: 14, background: bg,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--shadow-1)' }}>
-                <TossEmoji emoji={emoji} size={25} />
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: '1px solid var(--border)' }}>
+                <TossEmoji emoji={emoji} size={22} />
               </div>
               <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--on-surface-2)' }}>{label}</span>
             </button>
@@ -295,7 +286,7 @@ export default function Home({ patient }) {
                 const origIdx = records.length - 1 - i
                 const trendAreas = records.slice(0, origIdx + 1).map(rec => rec.wound_area_cm2 ?? 0)
                 return (
-                  <ScanRow key={r.id ?? r.date} record={r} idx={origIdx} total={records.length}
+                  <ScanRow key={r.id ?? r.date} record={r} idx={origIdx}
                     trendAreas={trendAreas} isLast={i === recentRecords.length - 1} />
                 )
               })}

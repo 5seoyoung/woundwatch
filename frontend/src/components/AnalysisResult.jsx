@@ -1,16 +1,10 @@
 import { useState } from 'react'
 import RiskBadge from './RiskBadge'
-import TossEmoji from './TossEmoji'
 
-function MetricCard({ emoji, label, value, color }) {
+function MetricCard({ label, value, color }) {
   return (
-    <div style={{
-      background: 'var(--surface-dim)', borderRadius: 12, padding: '12px 14px',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-        <TossEmoji emoji={emoji} size={14} />
-        <span style={{ fontSize: 11, color: 'var(--on-surface-2)', fontWeight: 500 }}>{label}</span>
-      </div>
+    <div style={{ background: 'var(--surface-dim)', borderRadius: 12, padding: '12px 14px' }}>
+      <div style={{ fontSize: 11, color: 'var(--on-surface-2)', fontWeight: 500, marginBottom: 6 }}>{label}</div>
       <div style={{ fontSize: 15, fontWeight: 700, color: color || 'var(--on-surface)' }}>{value}</div>
     </div>
   )
@@ -18,40 +12,40 @@ function MetricCard({ emoji, label, value, color }) {
 
 const NEXT_STEPS = {
   HIGH: {
-    dot: '#D93025',
-    title: '지금 즉시 당뇨발 전문 클리닉에 연락하세요',
+    dot: '#DC2626',
+    title: 'Contact a diabetic foot clinic immediately',
     items: [
-      '발에 체중을 싣지 마세요',
-      '상처를 깨끗한 거즈로 덮어두세요',
-      '오늘 안에 병원 방문 또는 응급 연락',
+      'Avoid putting weight on the foot',
+      'Cover the wound with clean gauze',
+      'Visit or call a clinic today',
     ],
-    bg: 'var(--danger-soft)',
-    border: 'rgba(217,48,37,0.2)',
-    color: 'var(--danger)',
+    bg: '#FEF2F2',
+    border: 'rgba(220,38,38,0.2)',
+    color: '#991B1B',
   },
   MEDIUM: {
-    dot: '#F9AB00',
-    title: '이번 주 안에 담당 의사에게 상처 사진을 보내세요',
+    dot: '#D97706',
+    title: 'Send wound photos to your doctor this week',
     items: [
-      '매일 사진 찍어 변화 기록',
-      '발이 붓거나 열감이 생기면 즉시 병원',
-      '다음 주 재검사 예약',
+      'Photograph daily to track changes',
+      'Seek immediate care if swelling or heat develops',
+      'Schedule a follow-up appointment',
     ],
-    bg: '#FFFBF0',
-    border: 'rgba(249,171,0,0.25)',
-    color: '#B06000',
+    bg: '#FFFBEB',
+    border: 'rgba(217,119,6,0.2)',
+    color: '#92400E',
   },
   LOW: {
-    dot: '#1E8E3E',
-    title: '현재 상태 양호합니다. 주간 모니터링을 계속하세요',
+    dot: '#059669',
+    title: 'Current status looks stable. Continue weekly monitoring.',
     items: [
-      '다음 주 같은 각도로 사진 촬영',
-      '발 세척 및 보습 유지',
-      '이상 징후 발생 시 즉시 재분석',
+      'Photograph from the same angle next week',
+      'Maintain wound cleaning and moisturizing routine',
+      'Re-analyze immediately if any changes appear',
     ],
-    bg: '#F0FAF3',
-    border: 'rgba(30,142,62,0.2)',
-    color: 'var(--success)',
+    bg: '#ECFDF5',
+    border: 'rgba(5,150,105,0.2)',
+    color: '#065F46',
   },
 }
 
@@ -67,7 +61,7 @@ function NextSteps({ riskLevel }) {
       border: `1px solid ${cfg.border}`,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <div style={{ width: 10, height: 10, borderRadius: '50%', background: cfg.dot, flexShrink: 0 }} />
+        <div style={{ width: 8, height: 8, borderRadius: '50%', background: cfg.dot, flexShrink: 0 }} />
         <div style={{ fontSize: 13, fontWeight: 700, color: cfg.color, lineHeight: 1.4 }}>
           {cfg.title}
         </div>
@@ -112,11 +106,9 @@ export default function AnalysisResult({ result }) {
 
   return (
     <div className="fade-in" style={{ margin: '0 20px 12px' }}>
-      {/* ── Score card ── */}
       <div style={{
         background: 'var(--surface)', borderRadius: 20, padding: 20,
-        boxShadow: 'var(--shadow-1)',
-        border: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-1)', border: '1px solid var(--border)',
       }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
@@ -132,11 +124,11 @@ export default function AnalysisResult({ result }) {
           <RiskBadge level={risk_level} size="lg" />
         </div>
 
-        {/* Gauge */}
+        {/* Gauge bar */}
         <div style={{ height: 6, background: 'var(--surface-dim)', borderRadius: 100, overflow: 'hidden', marginBottom: 6 }}>
           <div style={{
             height: '100%', borderRadius: 100, width: `${score}%`,
-            background: 'linear-gradient(90deg, #1E8E3E 0%, #F9AB00 50%, #D93025 100%)',
+            background: 'linear-gradient(90deg, #059669 0%, #D97706 50%, #DC2626 100%)',
             transition: 'width 0.7s cubic-bezier(0.34,1.56,0.64,1)',
           }} />
         </div>
@@ -146,29 +138,14 @@ export default function AnalysisResult({ result }) {
 
         {/* Metrics grid */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
-          <MetricCard
-            emoji="🦠"
-            label="Infection"
-            value={infection ? 'Detected' : 'None'}
-            color={infection ? 'var(--danger)' : 'var(--success)'}
-          />
-          <MetricCard
-            emoji="🩸"
-            label="Ischemia"
-            value={ischemia ? 'Detected' : 'None'}
-            color={ischemia ? 'var(--danger)' : 'var(--success)'}
-          />
-          <MetricCard
-            emoji="📐"
-            label="Wound Area"
-            value={wound_area_cm2 ? `${wound_area_cm2} cm²` : '—'}
-          />
-          <MetricCard
-            emoji="📊"
-            label="Severity"
-            value={`${severity}/10`}
-            color={severity >= 7 ? 'var(--danger)' : severity >= 4 ? 'var(--warning)' : 'var(--success)'}
-          />
+          <MetricCard label="Infection" value={infection ? 'Detected' : 'None'}
+            color={infection ? 'var(--danger)' : 'var(--success)'} />
+          <MetricCard label="Ischemia" value={ischemia ? 'Detected' : 'None'}
+            color={ischemia ? 'var(--danger)' : 'var(--success)'} />
+          <MetricCard label="Wound Area"
+            value={wound_area_cm2 ? `${wound_area_cm2} cm²` : '—'} />
+          <MetricCard label="Severity" value={`${severity}/10`}
+            color={severity >= 7 ? 'var(--danger)' : severity >= 4 ? 'var(--warning)' : 'var(--success)'} />
         </div>
 
         {/* AI description */}
@@ -176,11 +153,8 @@ export default function AnalysisResult({ result }) {
           <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)' }}>
             <div style={{ background: 'linear-gradient(90deg, #4285F4, #34A853, #FBBC04, #EA4335)', height: 3 }} />
             <div style={{ background: 'var(--surface)', padding: '12px 14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                <TossEmoji emoji="✨" size={14} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary)', letterSpacing: '0.02em' }}>
-                  Gemma 4 AI Analysis
-                </span>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary)', letterSpacing: '0.02em', marginBottom: 8 }}>
+                Gemma 4 AI Analysis
               </div>
               <p style={{ fontSize: 13, color: 'var(--on-surface)', lineHeight: 1.65, margin: 0 }}>
                 {description}
@@ -189,7 +163,6 @@ export default function AnalysisResult({ result }) {
           </div>
         )}
 
-        {/* Next Steps */}
         <NextSteps riskLevel={risk_level} />
       </div>
     </div>

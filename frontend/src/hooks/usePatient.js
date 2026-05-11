@@ -5,7 +5,7 @@ const STORAGE_KEY = 'ww_patient'
 
 export const DEMO_PATIENT = {
   patient_id:    'demo-patient',
-  name:          'Alex Henderson',
+  name:          'Seoyoung OH',
   diabetes_type: 'Type 2',
   since:         'Apr 2026',
   is_demo:       true,
@@ -24,7 +24,6 @@ function loadPatient() {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw)
-    // 구형 데이터(is_demo 없는 버전) 자동 마이그레이션
     if (!REQUIRED_KEYS.every(k => k in parsed)) {
       localStorage.removeItem(STORAGE_KEY)
       return null

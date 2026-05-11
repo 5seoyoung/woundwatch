@@ -16,37 +16,82 @@ const SAMPLE_RESULT = {
 }
 
 const LOADING_STEPS = [
-  { emoji: '📸', text: '이미지 전처리 중...' },
-  { emoji: '🔍', text: '궤양 영역 감지 중...' },
-  { emoji: '🧠', text: 'Gemma 4 AI 분석 중...' },
-  { emoji: '🦠', text: '감염 징후 확인 중...' },
-  { emoji: '🩸', text: '혈류 상태 분석 중...' },
-  { emoji: '📊', text: '위험도 점수 계산 중...' },
+  { text: 'Preprocessing image...' },
+  { text: 'Detecting wound region...' },
+  { text: 'Running Gemma 4 analysis...' },
+  { text: 'Checking infection markers...' },
+  { text: 'Analyzing blood flow...' },
+  { text: 'Computing risk score...' },
+]
+
+// Sample cases — each generates a distinct canvas image sent to the real API.
+// Different brightness levels produce different demo-mode results.
+const SAMPLE_CASES = [
+  {
+    id: 'mild',
+    label: 'Case A',
+    sublabel: 'Mild DFU',
+    desc: 'Small ulcer, early stage',
+    colors: ['#F5DEB3', '#E8C8A0', '#DEB887'],
+    dotColor: '#059669',
+  },
+  {
+    id: 'moderate',
+    label: 'Case B',
+    sublabel: 'Moderate DFU',
+    desc: 'Progressive wound, ischemia signs',
+    colors: ['#C0705A', '#A85040', '#8B3A30'],
+    dotColor: '#D97706',
+  },
+  {
+    id: 'severe',
+    label: 'Case C',
+    sublabel: 'Severe DFU',
+    desc: 'Advanced ulcer, infection present',
+    colors: ['#5C2A20', '#3E1A10', '#2A0E08'],
+    dotColor: '#DC2626',
+  },
 ]
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/heic', 'image/heif', 'image/webp']
 
 const PHOTO_GUIDE = {
   good: [
-    '발에서 30~40cm 거리 유지',
-    '상처가 화면 중앙에 오도록',
-    '밝은 자연광 또는 형광등 아래',
-    '매주 같은 장소, 같은 각도',
+    '30–40 cm distance from the foot',
+    'Wound centered in frame',
+    'Bright natural or fluorescent light',
+    'Same location and angle each week',
   ],
   bad: [
-    '어두운 환경',
-    '너무 가깝거나 먼 거리',
-    '흔들린 사진',
-    '상처가 잘린 사진',
+    'Dark or shadowed environment',
+    'Too close or too far',
+    'Blurry or shaky photo',
+    'Wound partially cut off',
   ],
+}
+
+function generateCaseImage(colors) {
+  return new Promise(resolve => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 224
+    canvas.height = 224
+    const ctx = canvas.getContext('2d')
+    const grad = ctx.createRadialGradient(112, 112, 20, 112, 112, 112)
+    grad.addColorStop(0, colors[0])
+    grad.addColorStop(0.5, colors[1])
+    grad.addColorStop(1, colors[2])
+    ctx.fillStyle = grad
+    ctx.fillRect(0, 0, 224, 224)
+    canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.85)
+  })
 }
 
 function PhotoGuideContent() {
   return (
     <>
       <div style={{ marginBottom: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, color: 'var(--success)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-          <TossEmoji emoji="✅" size={12} />이렇게 찍으세요
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--success)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          Do
         </div>
         {PHOTO_GUIDE.good.map(t => (
           <div key={t} style={{ fontSize: 12, color: 'var(--on-surface)', padding: '2px 0', paddingLeft: 12, position: 'relative' }}>
@@ -55,8 +100,8 @@ function PhotoGuideContent() {
         ))}
       </div>
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, color: 'var(--danger)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-          <TossEmoji emoji="❌" size={12} />이런 사진은 정확도가 낮아요
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--danger)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          Avoid
         </div>
         {PHOTO_GUIDE.bad.map(t => (
           <div key={t} style={{ fontSize: 12, color: 'var(--on-surface)', padding: '2px 0', paddingLeft: 12, position: 'relative' }}>
@@ -71,13 +116,12 @@ function PhotoGuideContent() {
 function CameraGuideOverlay() {
   return (
     <div style={{ margin: '12px 20px 0', background: 'var(--surface)', borderRadius: 16, padding: '18px 16px', border: '1px solid var(--border)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 700, color: 'var(--on-surface)', marginBottom: 14 }}>
-        <TossEmoji emoji="📸" size={16} />
-        정확한 촬영 방법
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--on-surface)', marginBottom: 14 }}>
+        Photo guide
       </div>
       <PhotoGuideContent />
       <div style={{ marginTop: 14, fontSize: 12, fontWeight: 600, color: 'var(--primary)', textAlign: 'center', opacity: 0.7 }}>
-        잠시 후 카메라가 실행됩니다...
+        Camera launching...
       </div>
     </div>
   )
@@ -94,7 +138,6 @@ export default function Dashboard({ patient }) {
   const [guideOpen,    setGuideOpen]    = useState(false)
   const [cameraGuide,  setCameraGuide]  = useState(false)
 
-  // Auto-advance loading steps
   useEffect(() => {
     if (!loading) { setLoadingStep(0); return }
     if (loadingStep >= LOADING_STEPS.length - 1) return
@@ -102,7 +145,6 @@ export default function Dashboard({ patient }) {
     return () => clearTimeout(t)
   }, [loading, loadingStep])
 
-  // Camera guide: show for 3s then launch camera
   useEffect(() => {
     if (!cameraGuide) return
     const t = setTimeout(() => { setCameraGuide(false); setMode('camera') }, 3000)
@@ -111,7 +153,7 @@ export default function Dashboard({ patient }) {
 
   async function handleFile(file) {
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setError('JPG, PNG, HEIC 형식만 지원됩니다.')
+      setError('Supported formats: JPG, PNG, HEIC, WEBP')
       return
     }
     setPreview(URL.createObjectURL(file))
@@ -134,22 +176,35 @@ export default function Dashboard({ patient }) {
     }
   }
 
-  function loadSample() {
-    setPreview(null)
+  async function handleSampleCase(caseItem) {
     setResult(null)
     setError(null)
     setLoading(true)
     setLoadingStep(0)
-    setTimeout(() => {
-      setResult(SAMPLE_RESULT)
+    setPreview(null)
+
+    const blob = await generateCaseImage(caseItem.colors)
+    const file = new File([blob], `${caseItem.id}.jpg`, { type: 'image/jpeg' })
+    setPreview(URL.createObjectURL(blob))
+
+    const form = new FormData()
+    form.append('file', file)
+    form.append('patient_id', patient?.patient_id ?? 'default')
+
+    try {
+      const { data } = await api.post('/api/analyze', form)
+      setResult(data)
+    } catch {
+      setResult({ ...SAMPLE_RESULT, description: SAMPLE_RESULT.description + ' [Demo mode]' })
+    } finally {
       setLoading(false)
-    }, 1200 + LOADING_STEPS.length * 150)
+    }
   }
 
   function handleModeClick(key) {
     if (key === mode) return
     if (key === 'camera') {
-      setMode('upload')  // temporarily back to upload while guide shows
+      setMode('upload')
       setCameraGuide(true)
     } else {
       setMode(key)
@@ -183,31 +238,28 @@ export default function Dashboard({ patient }) {
       {!result && !loading && !cameraGuide && (
         <div style={{ padding: '16px 20px 0', display: 'flex', gap: 8 }}>
           {[
-            { key: 'upload', emoji: '📁', label: 'Upload' },
-            { key: 'camera', emoji: '📷', label: 'Camera' },
-          ].map(({ key, emoji, label }) => (
+            { key: 'upload', label: 'Upload' },
+            { key: 'camera', label: 'Camera' },
+          ].map(({ key, label }) => (
             <button
               key={key}
               onClick={() => handleModeClick(key)}
               style={{
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                padding: '10px 0', borderRadius: 12,
+                flex: 1, padding: '10px 0', borderRadius: 12,
                 border: mode === key ? '1.5px solid var(--primary)' : '1.5px solid var(--border)',
                 background: mode === key ? 'var(--primary-soft)' : 'var(--surface)',
                 color: mode === key ? 'var(--primary)' : 'var(--on-surface-2)',
                 fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                transition: 'all 0.15s',
-                minHeight: 44,
+                transition: 'all 0.15s', minHeight: 44,
               }}
             >
-              <TossEmoji emoji={emoji} size={15} />
               {label}
             </button>
           ))}
         </div>
       )}
 
-      {/* ── Camera guide overlay (3s) ── */}
+      {/* ── Camera guide overlay ── */}
       {cameraGuide && <CameraGuideOverlay />}
 
       {/* ── Camera ── */}
@@ -229,8 +281,7 @@ export default function Dashboard({ patient }) {
               fontSize: 13, fontWeight: 600, color: 'var(--on-surface-2)', cursor: 'pointer',
             }}
           >
-            <TossEmoji emoji="📸" size={15} />
-            정확한 촬영 방법 보기
+            Photo guide
             <span style={{ marginLeft: 'auto', fontSize: 11 }}>{guideOpen ? '▲' : '▼'}</span>
           </button>
           {guideOpen && (
@@ -241,39 +292,52 @@ export default function Dashboard({ patient }) {
         </div>
       )}
 
-      {/* ── Upload ── */}
+      {/* ── Upload zone ── */}
       {!result && !loading && !cameraGuide && mode === 'upload' && <UploadZone onFile={handleFile} />}
 
-      {/* ── Try Sample button ── */}
+      {/* ── Sample cases ── */}
       {!result && !loading && !cameraGuide && !preview && mode === 'upload' && (
-        <div style={{ padding: '0 20px 16px', display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
+        <div style={{ padding: '0 20px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
             <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-            <span style={{ fontSize: 12, color: 'var(--on-surface-3)', fontWeight: 500 }}>or</span>
+            <span style={{ fontSize: 12, color: 'var(--on-surface-3)', fontWeight: 500 }}>or try a sample case</span>
             <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
           </div>
-          <button
-            onClick={loadSample}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              background: 'var(--surface-dim)',
-              border: '1.5px solid var(--border)',
-              borderRadius: 100, padding: '10px 24px',
-              fontSize: 13, fontWeight: 700, color: 'var(--on-surface-2)',
-              cursor: 'pointer', width: '100%', justifyContent: 'center',
-              minHeight: 44,
-            }}
-          >
-            <TossEmoji emoji="🔬" size={16} />
-            Try with sample patient data
-          </button>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+            {SAMPLE_CASES.map(c => (
+              <button
+                key={c.id}
+                onClick={() => handleSampleCase(c)}
+                style={{
+                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  borderRadius: 14, padding: '14px 10px', cursor: 'pointer',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                  transition: 'box-shadow 0.15s',
+                }}
+              >
+                <div style={{
+                  width: 48, height: 48, borderRadius: 10,
+                  background: `radial-gradient(circle, ${c.colors[0]}, ${c.colors[2]})`,
+                  flexShrink: 0,
+                }} />
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, marginBottom: 2 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: c.dotColor }} />
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--on-surface)' }}>{c.label}</span>
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--on-surface-2)', fontWeight: 600 }}>{c.sublabel}</div>
+                  <div style={{ fontSize: 10, color: 'var(--on-surface-3)', marginTop: 2, lineHeight: 1.3 }}>{c.desc}</div>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
       {/* ── Preview ── */}
-      {preview && (
+      {preview && !loading && (
         <div style={{ margin: '0 20px 14px', borderRadius: 16, overflow: 'hidden', border: '1px solid var(--border)' }}>
-          <img src={preview} alt="Uploaded photo" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', display: 'block' }} />
+          <img src={preview} alt="Wound photo" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', display: 'block' }} />
         </div>
       )}
 
@@ -281,7 +345,7 @@ export default function Dashboard({ patient }) {
       {loading && (
         <div style={{
           background: 'var(--surface)', borderRadius: 20, padding: '40px 20px',
-          margin: '0 20px 14px', textAlign: 'center',
+          margin: '16px 20px', textAlign: 'center',
           border: '1px solid var(--border)',
         }}>
           <div style={{
@@ -290,9 +354,6 @@ export default function Dashboard({ patient }) {
             borderRadius: '50%', animation: 'spin 0.8s linear infinite',
             margin: '0 auto 20px',
           }} />
-          <div style={{ marginBottom: 8 }}>
-            <TossEmoji emoji={LOADING_STEPS[loadingStep]?.emoji} size={28} />
-          </div>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--on-surface)', marginBottom: 4 }}>
             {LOADING_STEPS[loadingStep]?.text}
           </div>
@@ -307,7 +368,7 @@ export default function Dashboard({ patient }) {
             ))}
           </div>
           <div style={{ fontSize: 11, color: 'var(--on-surface-3)' }}>
-            Powered by Gemma 4 · On-device analysis
+            Powered by Gemma 4
           </div>
         </div>
       )}
@@ -317,9 +378,7 @@ export default function Dashboard({ patient }) {
         <div style={{
           background: 'var(--danger-soft)', borderRadius: 14, padding: '14px 16px',
           margin: '0 20px 14px', fontSize: 13, color: 'var(--danger)',
-          display: 'flex', gap: 8, alignItems: 'flex-start',
         }}>
-          <TossEmoji emoji="⚠️" size={16} style={{ flexShrink: 0, marginTop: 1 }} />
           {error}
         </div>
       )}
@@ -331,30 +390,30 @@ export default function Dashboard({ patient }) {
       {result?.risk_level === 'HIGH' && (
         <button style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          background: 'var(--danger)', color: 'white', borderRadius: 14,
+          background: '#DC2626', color: 'white', borderRadius: 14,
           padding: '15px', fontSize: 14, fontWeight: 700,
           margin: '0 20px 12px', width: 'calc(100% - 40px)',
           border: 'none', cursor: 'pointer',
-          boxShadow: '0 4px 12px rgba(217,48,37,0.3)',
+          boxShadow: '0 4px 12px rgba(220,38,38,0.3)',
           minHeight: 44,
         }}>
-          <TossEmoji emoji="🏥" size={18} />
           Book a Clinic Visit Now
         </button>
       )}
 
-      {/* ── Offline badge ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        background: 'var(--purple-soft)', borderRadius: 12, padding: '12px 16px',
-        margin: '0 20px 24px',
-      }}>
-        <TossEmoji emoji="💻" size={22} />
-        <div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--purple)' }}>Works offline with Ollama</div>
-          <div style={{ fontSize: 11, color: 'var(--on-surface-2)' }}>Your photos never leave your device</div>
+      {/* ── Offline note ── */}
+      {!result && !loading && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          background: 'var(--surface-dim)', borderRadius: 12, padding: '12px 16px',
+          margin: '0 20px 24px', border: '1px solid var(--border)',
+        }}>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--on-surface-2)' }}>Works offline with Ollama</div>
+            <div style={{ fontSize: 11, color: 'var(--on-surface-3)' }}>Your photos never leave your device</div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

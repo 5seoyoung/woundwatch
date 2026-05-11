@@ -19,15 +19,14 @@ function DemoBanner() {
   const navigate = useNavigate()
   return (
     <div style={{
-      background: '#E8F0FE',
-      borderBottom: '1px solid rgba(26,115,232,0.18)',
-      padding: '9px 16px',
+      background: '#EEF3FD',
+      borderBottom: '1px solid rgba(26,115,232,0.15)',
+      padding: '8px 16px',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       flexShrink: 0,
     }}>
-      <span style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
-        <TossEmoji emoji="📋" size={13} />
-        데모 모드 · Alex Henderson
+      <span style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600 }}>
+        Demo · Seoyoung OH
       </span>
       <button
         onClick={() => navigate('/analyze')}
@@ -38,7 +37,7 @@ function DemoBanner() {
           whiteSpace: 'nowrap',
         }}
       >
-        샘플 분석 체험하기 →
+        Try sample analysis →
       </button>
     </div>
   )
