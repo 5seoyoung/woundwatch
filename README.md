@@ -1,4 +1,5 @@
 # WoundWatch
+<img width="560" height="280" alt="image" src="https://github.com/user-attachments/assets/950c4e6a-96f6-434a-833e-5d08e45201d6" />
 
 **Diabetic Foot Ulcer Weekly Tracking + Amputation Risk Early Warning**
 
