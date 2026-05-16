@@ -5,7 +5,7 @@ const STORAGE_KEY = 'ww_patient'
 
 export const DEMO_PATIENT = {
   patient_id:    'demo-patient',
-  name:          'Seoyoung OH',
+  name:          'Alex Henderson',
   diabetes_type: 'Type 2',
   since:         'Apr 2026',
   is_demo:       true,

@@ -26,7 +26,7 @@ function DemoBanner() {
       flexShrink: 0,
     }}>
       <span style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600 }}>
-        Demo · Seoyoung OH
+        Demo · Alex Henderson
       </span>
       <button
         onClick={() => navigate('/analyze')}

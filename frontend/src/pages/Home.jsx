@@ -154,7 +154,7 @@ export default function Home({ patient }) {
               No scans yet
             </div>
             <div style={{ fontSize: 12, color: 'var(--on-surface-2)', marginBottom: 20, lineHeight: 1.5 }}>
-              Take your first photo to start<br />tracking your wound progress.
+              Is your wound better or worse than last week?<br />Take your first photo to start tracking.
             </div>
             <button
               onClick={() => navigate('/analyze')}

@@ -59,4 +59,4 @@ async def analyze(
     db.add(record)
     db.commit()
 
-    return AnalysisResponse(date=today, **result)
+    return AnalysisResponse(date=today, bbox=result.get("bbox"), **{k: v for k, v in result.items() if k != "bbox"})

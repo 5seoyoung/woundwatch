@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import UploadZone from '../components/UploadZone'
@@ -12,6 +12,8 @@ const SAMPLE_RESULT = {
   severity: 8.0,
   wound_area_cm2: 4.1,
   risk_level: 'HIGH',
+  confidence: 0.82,
+  bbox: [0.18, 0.22, 0.76, 0.84],
   description: 'Moderate to severe diabetic foot ulcer observed. Erythema and exudate around the wound margins suggest possible bacterial colonization. Compromised blood flow also noted. Immediate medical attention is strongly recommended.',
 }
 
@@ -24,31 +26,26 @@ const LOADING_STEPS = [
   { text: 'Computing risk score...' },
 ]
 
-// Sample cases — each generates a distinct canvas image sent to the real API.
-// Different brightness levels produce different demo-mode results.
 const SAMPLE_CASES = [
   {
-    id: 'mild',
+    id: 'case-a',
     label: 'Case A',
     sublabel: 'Mild DFU',
-    desc: 'Small ulcer, early stage',
-    colors: ['#F5DEB3', '#E8C8A0', '#DEB887'],
+    desc: 'Small heel ulcer, early stage',
     dotColor: '#059669',
   },
   {
-    id: 'moderate',
+    id: 'case-b',
     label: 'Case B',
     sublabel: 'Moderate DFU',
-    desc: 'Progressive wound, ischemia signs',
-    colors: ['#C0705A', '#A85040', '#8B3A30'],
+    desc: 'Toe lesions, progression noted',
     dotColor: '#D97706',
   },
   {
-    id: 'severe',
+    id: 'case-c',
     label: 'Case C',
     sublabel: 'Severe DFU',
-    desc: 'Advanced ulcer, infection present',
-    colors: ['#5C2A20', '#3E1A10', '#2A0E08'],
+    desc: 'Multiple necrotic ulcers',
     dotColor: '#DC2626',
   },
 ]
@@ -70,20 +67,117 @@ const PHOTO_GUIDE = {
   ],
 }
 
-function generateCaseImage(colors) {
-  return new Promise(resolve => {
-    const canvas = document.createElement('canvas')
-    canvas.width = 224
-    canvas.height = 224
+
+const BBOX_COLORS = { HIGH: '#DC2626', MEDIUM: '#D97706', LOW: '#059669' }
+
+function WoundOverlay({ src, result }) {
+  const imgRef = useRef(null)
+  const canvasRef = useRef(null)
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    if (!ready || !result?.bbox) return
+    const img = imgRef.current
+    const canvas = canvasRef.current
+    if (!img || !canvas) return
+
+    const W = img.clientWidth
+    const H = img.clientHeight
+    canvas.width = W
+    canvas.height = H
+
+    const [x0, y0, x1, y1] = result.bbox
+    const px = x0 * W, py = y0 * H
+    const bw = (x1 - x0) * W, bh = (y1 - y0) * H
+    const color = BBOX_COLORS[result.risk_level] || BBOX_COLORS.LOW
     const ctx = canvas.getContext('2d')
-    const grad = ctx.createRadialGradient(112, 112, 20, 112, 112, 112)
-    grad.addColorStop(0, colors[0])
-    grad.addColorStop(0.5, colors[1])
-    grad.addColorStop(1, colors[2])
-    ctx.fillStyle = grad
-    ctx.fillRect(0, 0, 224, 224)
-    canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.85)
-  })
+    ctx.clearRect(0, 0, W, H)
+
+    // dim outside wound area
+    ctx.fillStyle = 'rgba(0,0,0,0.38)'
+    ctx.fillRect(0, 0, W, H)
+    ctx.clearRect(px, py, bw, bh)
+
+    // box border
+    ctx.strokeStyle = color
+    ctx.lineWidth = 1.5
+    ctx.strokeRect(px, py, bw, bh)
+
+    // corner accents
+    const cs = 14
+    ctx.lineWidth = 3.5
+    ctx.lineCap = 'round'
+    ;[[px,py,1,1],[px+bw,py,-1,1],[px,py+bh,1,-1],[px+bw,py+bh,-1,-1]].forEach(([cx,cy,dx,dy]) => {
+      ctx.beginPath(); ctx.moveTo(cx+dx*cs, cy); ctx.lineTo(cx, cy); ctx.lineTo(cx, cy+dy*cs); ctx.stroke()
+    })
+
+    // label tag
+    const label = 'AI Wound Detection'
+    ctx.font = 'bold 10px -apple-system,BlinkMacSystemFont,sans-serif'
+    const tw = ctx.measureText(label).width + 16
+    const lx = px
+    const ly = py > 26 ? py - 26 : py + bh + 6
+    ctx.fillStyle = color
+    ctx.beginPath()
+    if (ctx.roundRect) ctx.roundRect(lx, ly, tw, 20, 4)
+    else ctx.rect(lx, ly, tw, 20)
+    ctx.fill()
+    ctx.fillStyle = '#fff'
+    ctx.fillText(label, lx + 8, ly + 14)
+
+    // infection marker
+    if (result.infection) {
+      const mx = px + bw * 0.22, my = py + bh * 0.38
+      ctx.fillStyle = 'rgba(220,38,38,0.3)'; ctx.beginPath(); ctx.arc(mx, my, 10, 0, Math.PI*2); ctx.fill()
+      ctx.fillStyle = '#DC2626'; ctx.beginPath(); ctx.arc(mx, my, 5, 0, Math.PI*2); ctx.fill()
+      ctx.font = 'bold 9.5px -apple-system,sans-serif'; ctx.fillStyle = '#fff'
+      ctx.fillText('Infection', mx + 14, my + 4)
+    }
+
+    // ischemia marker
+    if (result.ischemia) {
+      const mx = px + bw * 0.62, my = py + bh * 0.65
+      ctx.fillStyle = 'rgba(124,58,237,0.3)'; ctx.beginPath(); ctx.arc(mx, my, 10, 0, Math.PI*2); ctx.fill()
+      ctx.fillStyle = '#7C3AED'; ctx.beginPath(); ctx.arc(mx, my, 5, 0, Math.PI*2); ctx.fill()
+      ctx.font = 'bold 9.5px -apple-system,sans-serif'; ctx.fillStyle = '#fff'
+      ctx.fillText('Ischemia', mx + 14, my + 4)
+    }
+
+    // confidence badge bottom-right of box
+    const conf = result.confidence != null ? Math.round(result.confidence * 100) : null
+    if (conf != null) {
+      const confLabel = `${conf}% conf.`
+      ctx.font = 'bold 9.5px -apple-system,sans-serif'
+      const cw = ctx.measureText(confLabel).width + 12
+      const bx = px + bw - cw - 2
+      const by = py + bh + 5
+      ctx.fillStyle = 'rgba(0,0,0,0.65)'
+      ctx.beginPath()
+      if (ctx.roundRect) ctx.roundRect(bx, by, cw, 17, 3)
+      else ctx.rect(bx, by, cw, 17)
+      ctx.fill()
+      ctx.fillStyle = '#fff'
+      ctx.fillText(confLabel, bx + 6, by + 12)
+    }
+  }, [ready, result])
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <img
+        ref={imgRef}
+        src={src}
+        alt="Wound photo"
+        onLoad={() => setReady(true)}
+        style={{ width: '100%', display: 'block' }}
+      />
+      {result?.bbox && ready && (
+        <canvas
+          ref={canvasRef}
+          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
+        />
+      )}
+    </div>
+  )
 }
 
 function PhotoGuideContent() {
@@ -183,7 +277,8 @@ export default function Dashboard({ patient }) {
     setLoadingStep(0)
     setPreview(null)
 
-    const blob = await generateCaseImage(caseItem.colors)
+    const resp = await fetch(`${import.meta.env.BASE_URL}samples/${caseItem.id}.jpg`)
+    const blob = await resp.blob()
     const file = new File([blob], `${caseItem.id}.jpg`, { type: 'image/jpeg' })
     setPreview(URL.createObjectURL(blob))
 
@@ -216,7 +311,7 @@ export default function Dashboard({ patient }) {
     <div>
       {/* ── Header ── */}
       <div style={{
-        background: 'var(--surface)', padding: '16px 20px',
+        background: 'var(--surface)', padding: '12px 20px',
         display: 'flex', alignItems: 'center', gap: 12,
         borderBottom: '1px solid var(--border)',
         position: 'sticky', top: 0, zIndex: 10,
@@ -228,10 +323,19 @@ export default function Dashboard({ patient }) {
             background: 'var(--surface-dim)', display: 'flex',
             alignItems: 'center', justifyContent: 'center',
             border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--on-surface)',
-            minWidth: 44, minHeight: 44,
+            minWidth: 44, minHeight: 44, flexShrink: 0,
           }}
         >←</button>
-        <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--on-surface)' }}>New Scan</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+          <img src={`${import.meta.env.BASE_URL}logo.png`} alt="WoundWatch"
+            style={{ width: 28, height: 28, objectFit: 'contain' }} />
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--on-surface)', letterSpacing: '-0.3px', lineHeight: 1.1 }}>
+              WoundWatch
+            </div>
+            <div style={{ fontSize: 10, color: 'var(--on-surface-3)', fontWeight: 500 }}>New Scan</div>
+          </div>
+        </div>
       </div>
 
       {/* ── Mode toggle ── */}
@@ -315,11 +419,11 @@ export default function Dashboard({ patient }) {
                   transition: 'box-shadow 0.15s',
                 }}
               >
-                <div style={{
-                  width: 48, height: 48, borderRadius: 10,
-                  background: `radial-gradient(circle, ${c.colors[0]}, ${c.colors[2]})`,
-                  flexShrink: 0,
-                }} />
+                <img
+                  src={`${import.meta.env.BASE_URL}samples/${c.id}.jpg`}
+                  alt={c.sublabel}
+                  style={{ width: 64, height: 64, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
+                />
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, marginBottom: 2 }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: c.dotColor }} />
@@ -337,7 +441,7 @@ export default function Dashboard({ patient }) {
       {/* ── Preview ── */}
       {preview && !loading && (
         <div style={{ margin: '0 20px 14px', borderRadius: 16, overflow: 'hidden', border: '1px solid var(--border)' }}>
-          <img src={preview} alt="Wound photo" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', display: 'block' }} />
+          <WoundOverlay src={preview} result={result} />
         </div>
       )}
 
@@ -401,7 +505,7 @@ export default function Dashboard({ patient }) {
         </button>
       )}
 
-      {/* ── Offline note ── */}
+      {/* ── Privacy note ── */}
       {!result && !loading && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10,
@@ -409,8 +513,8 @@ export default function Dashboard({ patient }) {
           margin: '0 20px 24px', border: '1px solid var(--border)',
         }}>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--on-surface-2)' }}>Works offline with Ollama</div>
-            <div style={{ fontSize: 11, color: 'var(--on-surface-3)' }}>Your photos never leave your device</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--on-surface-2)' }}>Powered by Gemma 4 · Private</div>
+            <div style={{ fontSize: 11, color: 'var(--on-surface-3)' }}>Images are used only for analysis and never shared</div>
           </div>
         </div>
       )}

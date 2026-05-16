@@ -45,6 +45,18 @@ export default function Onboarding({ onDemo, onComplete }) {
         <div style={{ fontSize: 13, color: 'var(--on-surface-2)', marginTop: 3 }}>
           AI-powered diabetic foot monitoring
         </div>
+        <div style={{
+          marginTop: 10, background: 'var(--surface-dim)', borderRadius: 10,
+          padding: '9px 12px', border: '1px solid var(--border)', maxWidth: 320,
+        }}>
+          <div style={{ fontSize: 11, color: 'var(--danger)', fontWeight: 700, marginBottom: 3 }}>
+            Every 20 seconds, a limb is lost to diabetic complications.
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--on-surface-2)', lineHeight: 1.5 }}>
+            WoundWatch answers the question that matters most:<br />
+            <span style={{ fontWeight: 700, color: 'var(--on-surface)' }}>Is this wound worse than last week?</span>
+          </div>
+        </div>
       </div>
 
       <div style={{ width: '100%', maxWidth: 400 }}>
@@ -72,7 +84,7 @@ export default function Onboarding({ onDemo, onComplete }) {
                   background: 'var(--primary-soft)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <TossEmoji emoji="🔬" size={22} />
+                  <TossEmoji emoji="🩺" size={22} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -83,7 +95,7 @@ export default function Onboarding({ onDemo, onComplete }) {
                     }}>RECOMMENDED</span>
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--on-surface-2)', lineHeight: 1.55 }}>
-                    Explore a pre-loaded case of Alex Henderson — a Type 2 diabetic patient with 3 weeks of wound history.
+                    Follow Alex Henderson's 3-week DFU case — from stable to high-risk — and see weekly trend analysis in action.
                   </div>
                 </div>
               </div>
@@ -154,7 +166,7 @@ export default function Onboarding({ onDemo, onComplete }) {
                   type="text"
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  placeholder="e.g. Alex Henderson"
+                  placeholder="e.g. Jane Smith"
                   style={{
                     width: '100%', padding: '12px 14px',
                     borderRadius: 12, border: '1.5px solid var(--border)',

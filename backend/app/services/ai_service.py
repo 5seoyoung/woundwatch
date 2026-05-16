@@ -23,7 +23,8 @@ Analyze the wound image and respond ONLY with a valid JSON object. No explanatio
   "severity": 0.0 to 10.0,
   "wound_area_cm2": estimated area as float,
   "description": "one paragraph clinical description in English",
-  "confidence": 0.0 to 1.0
+  "confidence": 0.0 to 1.0,
+  "bbox": [x_min, y_min, x_max, y_max]
 }
 
 Assessment criteria:
@@ -31,7 +32,8 @@ Assessment criteria:
 - ischemia: Look for pallor, cyanosis, lack of granulation tissue, dry necrosis, pale wound bed
 - severity: 0=minimal/healing, 5=moderate progression, 10=critical/limb-threatening
 - wound_area_cm2: estimate based on proportion of visible foot area (average adult foot ~150 cm2)
-- confidence: your confidence in the assessment (0=very uncertain, 1=highly confident)"""
+- confidence: your confidence in the assessment (0=very uncertain, 1=highly confident)
+- bbox: bounding box of the primary wound region as normalized coordinates [x_min, y_min, x_max, y_max] where each value is between 0.0 and 1.0 (0,0 = top-left corner, 1,1 = bottom-right corner)"""
 
 
 # ── JSON parser ───────────────────────────────────────────────────────────────
@@ -42,6 +44,15 @@ def parse_gemma_response(text: str) -> dict:
     if match:
         try:
             data = json.loads(match.group())
+            raw_bbox = data.get("bbox")
+            bbox = None
+            if isinstance(raw_bbox, list) and len(raw_bbox) == 4:
+                try:
+                    bbox = [float(min(max(v, 0.0), 1.0)) for v in raw_bbox]
+                    if bbox[2] <= bbox[0] or bbox[3] <= bbox[1]:
+                        bbox = None
+                except (ValueError, TypeError):
+                    bbox = None
             return {
                 "infection":      bool(data.get("infection", False)),
                 "ischemia":       bool(data.get("ischemia", False)),
@@ -49,6 +60,7 @@ def parse_gemma_response(text: str) -> dict:
                 "wound_area_cm2": float(data.get("wound_area_cm2", 2.0)) if data.get("wound_area_cm2") else None,
                 "description":    str(data.get("description", "Analysis complete.")),
                 "confidence":     float(min(max(data.get("confidence", 0.5), 0.0), 1.0)),
+                "bbox":           bbox,
             }
         except (json.JSONDecodeError, ValueError, TypeError):
             pass
@@ -60,6 +72,7 @@ def parse_gemma_response(text: str) -> dict:
         "wound_area_cm2": None,
         "description":    "Analysis unavailable. Please ensure Ollama is running and try again.",
         "confidence":     0.0,
+        "bbox":           None,
     }
 
 
@@ -147,6 +160,7 @@ def _analyze_demo(image: Image.Image) -> dict:
             "[DEMO MODE — connect Ollama (ollama pull gemma4:4b) for real Gemma 4 analysis]"
         ),
         "confidence": 0.0,
+        "bbox": [0.25, 0.30, 0.75, 0.80],
     }
 
 

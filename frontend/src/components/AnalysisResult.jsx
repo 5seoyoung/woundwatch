@@ -132,8 +132,25 @@ export default function AnalysisResult({ result }) {
             transition: 'width 0.7s cubic-bezier(0.34,1.56,0.64,1)',
           }} />
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--on-surface-3)', marginBottom: 20, fontWeight: 500 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--on-surface-3)', marginBottom: 8, fontWeight: 500 }}>
           <span>Safe</span><span>Caution</span><span>Critical</span>
+        </div>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 18, justifyContent: 'center', flexWrap: 'wrap' }}>
+          {[
+            { label: 'Area Δ', weight: '40%', color: '#1A73E8' },
+            { label: 'Infection', weight: '35%', color: '#DC2626' },
+            { label: 'Ischemia', weight: '25%', color: '#7C3AED' },
+          ].map(({ label, weight, color }) => (
+            <div key={label} style={{
+              display: 'flex', alignItems: 'center', gap: 4,
+              background: 'var(--surface-dim)', borderRadius: 99,
+              padding: '3px 8px', border: '1px solid var(--border)',
+            }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0 }} />
+              <span style={{ fontSize: 10, color: 'var(--on-surface-3)', fontWeight: 500 }}>{label}</span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--on-surface-2)' }}>{weight}</span>
+            </div>
+          ))}
         </div>
 
         {/* Metrics grid */}
@@ -154,7 +171,7 @@ export default function AnalysisResult({ result }) {
             <div style={{ background: 'linear-gradient(90deg, #4285F4, #34A853, #FBBC04, #EA4335)', height: 3 }} />
             <div style={{ background: 'var(--surface)', padding: '12px 14px' }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary)', letterSpacing: '0.02em', marginBottom: 8 }}>
-                Gemma 4 AI Analysis
+                Gemma 4 E2B Analysis
               </div>
               <p style={{ fontSize: 13, color: 'var(--on-surface)', lineHeight: 1.65, margin: 0 }}>
                 {description}

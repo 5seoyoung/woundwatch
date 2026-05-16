@@ -19,6 +19,8 @@ class AnalysisResponse(BaseModel):
     risk_level:      str           # LOW | MEDIUM | HIGH
     description:     str
     date:            str
+    bbox:            Optional[list[float]]  # [x_min, y_min, x_max, y_max] normalized 0-1
+    confidence:      Optional[float]
 
 class HistoryRecord(AnalysisResponse):
     id:         int

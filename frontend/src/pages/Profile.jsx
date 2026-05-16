@@ -6,10 +6,10 @@ import api from '../lib/api'
 import { DEMO_RECORDS } from '../hooks/usePatient'
 
 const HOW_IT_WORKS = [
-  { emoji: '📷', step: '1', title: 'Take a weekly photo',    desc: 'Photograph your foot wound at the same angle each week.' },
-  { emoji: '🤖', step: '2', title: 'AI analyzes the wound',  desc: 'Gemma 4 checks for infection, ischemia, and wound severity.' },
-  { emoji: '📊', step: '3', title: 'Track changes over time', desc: 'See how your wound is healing — or worsening — week by week.' },
-  { emoji: '🚨', step: '4', title: 'Get early warnings',     desc: 'Receive alerts before the wound reaches a critical stage.' },
+  { emoji: '📷', step: '1', title: 'Weekly wound photo',      desc: 'Photograph at the same angle each week — 30–40 cm distance, wound centered in frame.' },
+  { emoji: '🤖', step: '2', title: 'Gemma 4 E2B analyzes',    desc: 'Classifies infection, ischemia, severity (0–10), and estimates wound area from a single photo.' },
+  { emoji: '📊', step: '3', title: 'Composite risk score',    desc: 'Time-series scoring weights area change (40%), infection (35%), and ischemia (25%) across weekly scans.' },
+  { emoji: '🚨', step: '4', title: 'Alert before it\'s critical', desc: 'Score ≥ 70 triggers a HIGH alert with an immediate action checklist — before the wound reaches a limb-threatening stage.' },
 ]
 
 function initials(name = '') {
@@ -110,8 +110,8 @@ export default function Profile({ patient, onReset }) {
         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--on-surface-2)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Privacy</div>
         <div style={{ background: 'var(--surface)', borderRadius: 14, overflow: 'hidden', border: '1px solid var(--border)', boxShadow: 'var(--shadow-1)' }}>
           {[
-            { emoji: '💻', title: 'Runs locally with Ollama',   desc: 'AI inference runs on your device — no cloud required.' },
-            { emoji: '🔒', title: 'Photos stay on your device', desc: 'Your medical images are never sent to external servers.' },
+            { emoji: '🔒', title: 'Analysis stays private',     desc: 'Images are used only for analysis and never shared with third parties.' },
+            { emoji: '💻', title: 'Optional local mode',        desc: 'Run Gemma 4 entirely on your own device with Ollama — zero data leaves your machine.' },
             { emoji: '🏥', title: 'For monitoring only',        desc: 'WoundWatch is not a replacement for clinical diagnosis.' },
           ].map(({ emoji, title, desc }, i, arr) => (
             <div key={title} style={{ display: 'flex', gap: 12, padding: '14px 16px', alignItems: 'flex-start', borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
@@ -131,7 +131,7 @@ export default function Profile({ patient, onReset }) {
           {['#4285F4','#EA4335','#FBBC04','#34A853'].map(c => (
             <div key={c} style={{ width: 7, height: 7, borderRadius: '50%', background: c }} />
           ))}
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--on-surface-2)' }}>Powered by Google Gemma 4</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--on-surface-2)' }}>Powered by Gemma 4 E2B · Fine-tuned on DFUC</span>
         </div>
       </div>
 
